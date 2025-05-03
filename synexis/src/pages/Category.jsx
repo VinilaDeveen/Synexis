@@ -151,8 +151,7 @@ const CategoryPage = () => {
   };
   
   const handleAddCategory = () => {
-    console.log("Add category clicked");
-    notifySuccess('Add category dialog opened');
+    navigate('/addCategory')
   };
 
   const handleEditCategory = (id) => {
@@ -169,6 +168,7 @@ const CategoryPage = () => {
       // Simulate API call for deletion
       categoryService.delete(id);
       notifySuccess(`Category "${categoryName}" successfully deleted`);
+      window.location.reload();
     } catch (error) {
       notifyError(`Error deleting category: ${error.message || 'Unknown error'}`);
     }
@@ -365,15 +365,15 @@ const CategoryPage = () => {
                   />
                 </div>
               </div>
-              <Link to="/addCategory">
-                <button 
-                  onClick={handleAddCategory}
-                  className="bg-[#3C50E0] hover:bg-blue-700 text-white px-3 py-2 text-sm rounded-lg flex items-center justify-center sm:justify-start gap-2 focus:outline-none"
-                >
-                  <Plus size={16} />
-                  <span>Add Category</span>
-                </button>
-              </Link>
+
+              <button 
+                onClick={handleAddCategory}
+                className="bg-[#3C50E0] hover:bg-blue-700 text-white px-3 py-2 text-sm rounded-lg flex items-center justify-center sm:justify-start gap-2 focus:outline-none"
+              >
+                <Plus size={16} />
+                <span>Add Category</span>
+              </button>
+              
             </div>
             <hr />
 
