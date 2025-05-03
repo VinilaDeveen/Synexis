@@ -1,7 +1,7 @@
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import { NotificationProvider } from './context/NotificationContext';
 import Notifications from './components/Notifications';
-import SynexisPages from "./pages/SynexisPages";
+import CategoryPage from "./pages/Category";
 
 function App() {
 
@@ -10,7 +10,7 @@ function App() {
       <NotificationProvider>
         <Notifications />
         <Routes>
-          <Route path="/" element={<SynexisPages />} />
+          <Route path="/category" element={<CategoryPage />} />
         </Routes>
       </NotificationProvider>
     </Router>

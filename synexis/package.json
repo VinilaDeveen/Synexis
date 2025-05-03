@@ -17,6 +17,7 @@
     "@material-tailwind/react": "^2.1.10",
     "@mui/icons-material": "^7.0.2",
     "@mui/styled-engine": "^7.0.2",
+    "@mui/x-data-grid": "^8.2.0",
     "axios": "^1.8.4",
     "lucide-react": "^0.507.0",
     "react": "^19.0.0",
