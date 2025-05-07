@@ -6,7 +6,7 @@ const Notification = () => {
 
   return (
     <div>
-      <ToastContainer />      
+      <ToastContainer style={{ marginTop: '70px' }} />      
     </div>
   );
 };

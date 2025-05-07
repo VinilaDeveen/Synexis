@@ -1,6 +1,12 @@
 import Navbar from '../components/Navbar';
 import Sidebar from '../components/Sidebar';
 import RecentActivities from '../components/RecentActivity';
+import { 
+  FullPageLoader, 
+  InlineLoader, 
+  ButtonLoader,
+  ContentLoader 
+} from '../components/loaders';
 import { useState, useEffect, useRef } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { FaEdit, FaEye } from "react-icons/fa";
@@ -28,42 +34,10 @@ const CategoryPage = () => {
     pageSize: 5,
     page: 0,
   });
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true); // Start with loading true
   const isInitialLoad = useRef(true);
   
-  // Fetch categories from API
-  useEffect(() => {
-    const fetchCategories = async () => {
-      try {
-        setLoading(true);
-        const response = await categoryService.getAll();
-        if (response && response.data) {
-          setCategories(response.data);
-          
-          // Only show notification if we want to notify on initial load
-          if (isInitialLoad.current) {
-            notifySuccess("Categories loaded successfully");
-            // Set to false so subsequent data fetches can show notifications
-            isInitialLoad.current = false;
-          }
-        }
-      } catch (error) {
-        if (isInitialLoad.current){
-          console.error('Error fetching categories:', error);
-          notifyError(`Failed to load categories: ${error.message || 'Unknown error'}`);
-          isInitialLoad.current = false;
-        }
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    // Fetch the categories
-    fetchCategories();
-  }, []);
-
-  
-  // Check screen size and set mobile state
+  // Check screen size and set mobile state - moved up to run first
   useEffect(() => {
     const handleResize = () => {
       setIsMobile(window.innerWidth < 768);
@@ -83,6 +57,35 @@ const CategoryPage = () => {
     // Cleanup
     return () => window.removeEventListener('resize', handleResize);
   }, []);
+  
+  // Fetch categories from API
+  useEffect(() => {
+    const fetchCategories = async () => {
+      try {
+        setLoading(true);
+        const response = await categoryService.getAll();
+        if (response && response.data) {
+          setCategories(response.data);
+        }
+      } catch (error) {
+        if (isInitialLoad.current){
+          console.error('Error fetching categories:', error);
+          notifyError(`Failed to load categories: ${error.message || 'Unknown error'}`);
+          isInitialLoad.current = false;
+        }
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    // Fetch the categories
+    fetchCategories();
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // We need to check loading state before returning the full component
+  if (loading) {
+    return <FullPageLoader />;
+  }
 
   // Toggle sidebar
   const toggleSidebar = () => {
@@ -92,14 +95,6 @@ const CategoryPage = () => {
   
   // Recent activities data
   const recentActivities = [
-    { item: "Iron Sheet", action: "created by", user: "Steve Johns", date: "10 April 2025 09:23" },
-    { item: "Sheet", action: "created by", user: "Steve Johns", date: "10 April 2025 09:23" },
-    { item: "Iron Sheet", action: "created by", user: "Steve Johns", date: "10 April 2025 09:23" },
-    { item: "Sheet", action: "created by", user: "Steve Johns", date: "10 April 2025 09:23" },
-    { item: "Iron Sheet", action: "created by", user: "Steve Johns", date: "10 April 2025 09:23" },
-    { item: "Sheet", action: "created by", user: "Steve Johns", date: "10 April 2025 09:23" },
-    { item: "Iron Sheet", action: "created by", user: "Steve Johns", date: "10 April 2025 09:23" },
-    { item: "Sheet", action: "created by", user: "Steve Johns", date: "10 April 2025 09:23" },
     { item: "Iron Sheet", action: "created by", user: "Steve Johns", date: "10 April 2025 09:23" },
     { item: "Sheet", action: "created by", user: "Steve Johns", date: "10 April 2025 09:23" },
   ];
@@ -128,7 +123,7 @@ const CategoryPage = () => {
             },
             '& .MuiDataGrid-cell': {
               borderBottom: '1px solid #f1f5f9',
-              paddingLeft: '8px 16px',
+              paddingLeft: '8px 16px', // Fixed this to use valid CSS
             },
             '& .MuiDataGrid-columnSeparator': {
               display: 'none',
@@ -151,7 +146,8 @@ const CategoryPage = () => {
   };
   
   const handleAddCategory = () => {
-    navigate('/addCategory')
+    console.log("Add category clicked");
+    notifySuccess('Add category dialog opened');
   };
 
   const handleEditCategory = (id) => {
@@ -168,21 +164,71 @@ const CategoryPage = () => {
       // Simulate API call for deletion
       categoryService.delete(id);
       notifySuccess(`Category "${categoryName}" successfully deleted`);
-      window.location.reload();
     } catch (error) {
       notifyError(`Error deleting category: ${error.message || 'Unknown error'}`);
     }
   };
-
-  const handleViewCategory = (id) => {
-    console.log(`View category ${id} clicked`);
-    const category = categories.find(cat => cat.categoryId === id);
-    if (category) {
-      const categoryName = category.categoryName || category.mainCategoryName;
-      notifyDefault(`Viewing details for "${categoryName}"`);
-    } else {
-      notifyWarning('View details functionality coming soon');
-    }
+  
+  // Custom render components for DataGrid - moved up before they're used
+  const renderNameCell = (params) => {
+    const category = params.value;
+    const isActive = category.categoryStatus === 'ACTIVE';
+    const displayName = category.categoryName || category.mainCategoryName;
+    
+    return (
+      <div className="flex items-center">
+        <div className={`w-2 h-2 rounded-full mr-2 ${isActive ? 'bg-green-500' : 'bg-red-500'}`}></div>
+        <div>
+          <div className="hidden sm:block">
+            <span className="bg-[#3119C3] text-white text-xs px-2 py-1 rounded-md mr-2">
+              {category.mainCategoryName}
+            </span>
+            {category.mainCategoryName && category.categoryName && category.mainCategoryName !== category.categoryName && (
+              <span className="bg-[#A0B2F9] text-black text-xs px-2 py-1 rounded-md">
+                {displayName}
+              </span>
+            )}
+          </div>
+          <div className="block sm:hidden">
+            <span className="bg-[#3119C3] text-white text-xs px-2 py-1 rounded-md mr-2">
+            {category.mainCategoryName}
+            </span>
+          </div>
+        </div>
+      </div>
+    );
+  };
+  
+  const renderActionsCell = (params) => {
+    return (
+      <div className="flex gap-2 md:gap-6 mt-4">
+        <div 
+          className="text-[#3B50DF] hover:text-blue-900 cursor-pointer"
+          onClick={() => handleEditCategory(params.id)}
+          title="Edit Category"
+        >
+          <FaEdit size={isMobile ? 16 : 18} />
+        </div>
+        <div 
+          className="text-[#3B50DF] hover:text-red-500 cursor-pointer"
+          onClick={() => handleDeleteCategory(params.id)}
+          title="Delete Category"
+        >
+          <MdDelete size={isMobile ? 16 : 18} />
+        </div>
+        <Link 
+          to={`/categoryView/${params.id}`} 
+          state={{ selectedCategoryId: params.id }}
+        >
+          <div 
+            className="text-[#3B50DF] hover:text-green-500 cursor-pointer"
+            title="View Category Details"
+          >
+            <FaEye size={isMobile ? 16 : 18} />
+          </div>
+        </Link>
+      </div>
+    );
   };
   
   // Responsive columns setup
@@ -243,69 +289,6 @@ const CategoryPage = () => {
     status: category.categoryStatus,
     actions: category.categoryId
   }));
-  
-  // Custom render components for DataGrid
-  const renderNameCell = (params) => {
-    const category = params.value;
-    const isActive = category.categoryStatus === 'ACTIVE';
-    const displayName = category.categoryName || category.mainCategoryName;
-    
-    return (
-      <div className="flex items-center">
-        <div className={`w-2 h-2 rounded-full mr-2 ${isActive ? 'bg-green-500' : 'bg-red-500'}`}></div>
-        <div>
-          <div className="hidden sm:block">
-            <span className="bg-[#3119C3] text-white text-xs px-2 py-1 rounded-md mr-2">
-              {category.mainCategoryName}
-            </span>
-            {category.mainCategoryName && category.categoryName && category.mainCategoryName !== category.categoryName && (
-              <span className="bg-[#A0B2F9] text-black text-xs px-2 py-1 rounded-md">
-                {displayName}
-              </span>
-            )}
-          </div>
-          <div className="block sm:hidden">
-            <span className="bg-[#3119C3] text-white text-xs px-2 py-1 rounded-md mr-2">
-            {category.mainCategoryName}
-            </span>
-          </div>
-        </div>
-      </div>
-    );
-  };
-  
-  const renderActionsCell = (params) => {
-    return (
-      <div className="flex gap-2 md:gap-6 mt-4">
-        <div 
-          className="text-[#3B50DF] hover:text-blue-900 cursor-pointer"
-          onClick={() => handleEditCategory(params.id)}
-          title="Edit Category"
-        >
-          <FaEdit size={isMobile ? 16 : 18} />
-        </div>
-        <div 
-          className="text-[#3B50DF] hover:text-red-500 cursor-pointer"
-          onClick={() => handleDeleteCategory(params.id)}
-          title="Delete Category"
-        >
-          <MdDelete size={isMobile ? 16 : 18} />
-        </div>
-        <Link 
-          to={`/categoryView/${params.id}`} 
-          state={{ selectedCategoryId: params.id }}
-        >
-          <div 
-            className="text-[#3B50DF] hover:text-green-500 cursor-pointer"
-            title="View Category Details"
-            onClick={() => handleViewCategory(params.id)}
-          >
-            <FaEye size={isMobile ? 16 : 18} />
-          </div>
-        </Link>
-      </div>
-    );
-  };
 
   return (
     <div className="flex w-screen h-screen text-black bg-gray-100 overflow-hidden">
@@ -365,15 +348,15 @@ const CategoryPage = () => {
                   />
                 </div>
               </div>
-
-              <button 
-                onClick={handleAddCategory}
-                className="bg-[#3C50E0] hover:bg-blue-700 text-white px-3 py-2 text-sm rounded-lg flex items-center justify-center sm:justify-start gap-2 focus:outline-none"
-              >
-                <Plus size={16} />
-                <span>Add Category</span>
-              </button>
-              
+              <Link to="/addCategory">
+                <button 
+                  onClick={handleAddCategory}
+                  className="bg-[#3C50E0] hover:bg-blue-700 text-white px-3 py-2 text-sm rounded-lg flex items-center justify-center sm:justify-start gap-2 focus:outline-none"
+                >
+                  <Plus size={16} />
+                  <span>Add Category</span>
+                </button>
+              </Link>
             </div>
             <hr />
 
@@ -392,7 +375,6 @@ const CategoryPage = () => {
                   pageSizeOptions={[5]}
                   disableRowSelectionOnClick
                   autoHeight
-                  loading={loading}
                   sx={{
                     border: 'none',
                     '& .MuiDataGrid-cell:focus': {

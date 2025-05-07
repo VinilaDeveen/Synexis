@@ -8,7 +8,7 @@ const FullPageLoader = ({
   bgColor = 'white'
 }) => {
   return (
-    <div className={`flex h-screen items-center justify-center bg-${bgColor}`}>
+    <div className={`flex h-screen w-screen items-center justify-center bg-${bgColor}`}>
       <Spinner 
         size={size} 
         borderWidth={borderWidth} 
