@@ -5,6 +5,7 @@ import CategoryPage from "./pages/Category";
 import AddCategoryPage from "./pages/AddCategory";
 import CategoryView from "./pages/CategoryView";
 import BrandPage from "./pages/Brand";
+import AddBrandPage from "./pages/AddBrand";
 
 function App() {
 
@@ -18,6 +19,8 @@ function App() {
           <Route path="/editCategory/:id" element={<AddCategoryPage />} />
           <Route path="/categoryView/:id" element={<CategoryView />} />
           <Route path="/brand" element={<BrandPage />} />
+          <Route path="/addbrand" element={<AddBrandPage />} />
+          <Route path="/editBrand/:id" element={<AddBrandPage />} />
         </Routes>
       </NotificationProvider>
     </Router>
