@@ -1,12 +1,21 @@
 import Navbar from '../components/Navbar';
 import Sidebar from '../components/Sidebar';
+import { 
+  FullPageLoader, 
+  InlineLoader, 
+  ButtonLoader,
+  ContentLoader 
+} from '../components/loaders';
 import { IoMdInformationCircle } from "react-icons/io";
-import { useEffect, useState } from 'react';
+import { ToastContainer } from 'react-toastify';
+import { useNotification } from '../hooks/useNotification';
+import { useEffect, useState, useRef } from 'react';
 import { categoryService } from '../services/categoryService';
 import { useNavigate, useParams } from 'react-router-dom';
 import useTooltip from '../hooks/useTooltip'; // Import the custom hook
 
 const AddCategoryPage = () => {
+  const { notifySuccess, notifyError, notifyWarning, notifyDefault } = useNotification();
   const { id } = useParams(); // Get the category ID from URL if editing
   const isEditMode = !!id;
   const navigate = useNavigate();
@@ -20,7 +29,8 @@ const AddCategoryPage = () => {
   const [isSubCategory, setIsSubCategory] = useState(false);
   const [parentCategories, setParentCategories] = useState([]);
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
+  const [submitting, setSubmitting] = useState(false); // Add a specific state for submit button loading
+  const isInitialLoad = useRef(true);
 
   // Use the custom tooltip hook
   const categoryTooltip = useTooltip(
@@ -35,8 +45,11 @@ const AddCategoryPage = () => {
         const response = await categoryService.getAllDetails();
         setParentCategories(response.data);
       } catch (err) {
-        console.error('Error fetching categories:', err);
-        setError('Failed to load categories. Please try again.');
+        if (isInitialLoad.current) {
+          notifyError('Failed to load categories. Please try again.')
+          isInitialLoad.current = false;
+        }
+        
       }
     };
 
@@ -61,8 +74,8 @@ const AddCategoryPage = () => {
           // If it has a parent category, check the subcategory box
           setIsSubCategory(!!categoryData.parentCategoryId);
         } catch (err) {
-          console.error('Error fetching category details:', err);
-          setError('Failed to load category details. Please try again.');
+          notifyError('Failed to load category details. Please try again.')
+            
         } finally {
           setLoading(false);
         }
@@ -101,8 +114,7 @@ const AddCategoryPage = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setLoading(true);
-    setError('');
+    setSubmitting(true); // Set submitting to true when the save/update button is clicked
 
     const categoryData = {
       name: formData.name,
@@ -120,13 +132,12 @@ const AddCategoryPage = () => {
       navigate('/category');
     } catch (err) {
       console.error('Error saving category:', err);
-      setError(
-        isEditMode 
-          ? 'Failed to update category. Please try again.' 
-          : 'Failed to create category. Please try again.'
-      );
+      isEditMode 
+          ? notifyError('Failed to update category. Please try again.') 
+          : notifyError('Failed to create category. Please try again.')
+      setSubmitting(false); // Reset submitting state if there's an error
     } finally {
-      setLoading(false);
+    
     }
   };
 
@@ -135,7 +146,7 @@ const AddCategoryPage = () => {
   };
 
   if (loading && isEditMode) {
-    return <div className="flex items-center justify-center h-screen">Loading...</div>;
+    return <FullPageLoader />; // Use your FullPageLoader component when loading brand data
   }
 
   return (
@@ -156,15 +167,13 @@ const AddCategoryPage = () => {
 
         {/* Content Area */}
         <div className="p-6 flex-1">
+
+          {/* Toast notifications */}
+          <ToastContainer className="mt-[70px]" />
+
           <h1 className="text-2xl font-semibold mb-4">
             {isEditMode ? 'Update Category' : 'New Category'}
           </h1>
-
-          {error && (
-            <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
-              {error}
-            </div>
-          )}
 
           {/* Add/Edit Category Form */}
           <form onSubmit={handleSubmit}>
@@ -282,10 +291,10 @@ const AddCategoryPage = () => {
             <div className='flex justify-end mt-4'>
               <button 
                 type="submit"
-                disabled={loading}
-                className='bg-[#3C50E0] text-white px-6 py-2 rounded mr-4 hover:bg-blue-700 disabled:bg-blue-300'
+                disabled={submitting}
+                className='bg-[#3C50E0] text-white px-6 py-2 rounded mr-4 hover:bg-blue-700 disabled:bg-[ #3C50E0]'
               >
-                {loading ? 'Saving...' : isEditMode ? 'Update' : 'Save'}
+                {submitting ? <ButtonLoader text={isEditMode ? "Updating..." : "Saving..."} /> : isEditMode ? 'Update' : 'Save'}
               </button>
               <button 
                 type="button"
