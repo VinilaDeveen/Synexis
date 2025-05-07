@@ -1,6 +1,12 @@
 import Navbar from '../components/Navbar';
 import Sidebar from '../components/Sidebar';
-import { useState, useEffect } from 'react';
+import { 
+  FullPageLoader, 
+  InlineLoader, 
+  ButtonLoader,
+  ContentLoader 
+} from '../components/loaders';
+import { useState, useEffect, useRef } from 'react';
 import { Menu, Search } from 'lucide-react';
 import { FaEdit } from "react-icons/fa";
 import { MdDelete, MdOutlineClose } from "react-icons/md";
@@ -24,6 +30,8 @@ const CategoryView = () => {
   });
   const [loading, setLoading] = useState(false);
   const [categoryLoading, setCategoryLoading] = useState(false);
+  const isInitialLoad = useRef(true);
+  const isInitialLoad1 = useRef(true);
   
   // For accessing route parameters and state
   const { id } = useParams();
@@ -78,8 +86,11 @@ const CategoryView = () => {
           setCategories(response.data);
         }
       } catch (error) {
-        console.error('Error fetching categories:', error);
-        notifyError('Failed to load categories');
+        if (isInitialLoad.current) {
+          console.error('Error fetching categories:', error);
+          notifyError('Failed to load categories');
+          isInitialLoad.current = false
+        }
       } finally {
         setLoading(false);
       }
@@ -102,8 +113,11 @@ const CategoryView = () => {
           notifyWarning('Category not found');
         }
       } catch (error) {
-        console.error('Error fetching category details:', error);
-        notifyError('Failed to load category details');
+        if (isInitialLoad1.current) {
+          console.error('Error fetching category details:', error);
+          notifyError('Failed to load category details');
+          isInitialLoad1.current = false;
+        }
       } finally {
         setCategoryLoading(false);
       }
@@ -325,15 +339,15 @@ const CategoryView = () => {
             {/* Category List */}
             <div className="flex-1 overflow-y-auto p-2">
               {loading ? (
-                <div className="flex justify-center items-center h-32">
-                  <p>Loading categories...</p>
+                <div className='flex justify-center items-center h-32'>
+                  <InlineLoader/>
                 </div>
               ) : filteredCategories.length > 0 ? (
                 filteredCategories.map((category) => (
                   <div 
                     key={category.categoryId}
                     onClick={() => handleCategorySelect(category)}
-                    className={`p-2 mb-2 rounded-lg cursor-pointer ${selectedCategoryId == category.categoryId ? 'bg-blue-100' : 'hover:bg-gray-100'}`}
+                    className={`p-2 mb-2 cursor-pointer ${selectedCategoryId == category.categoryId ? 'bg-blue-100' : 'hover:bg-gray-100'}`}
                   >
                     {isSubcategory(category) ? (
                       <div className="flex flex-wrap gap-1">
@@ -361,23 +375,23 @@ const CategoryView = () => {
                   <h1 className="text-xl font-semibold">
                     {selectedCategory.categoryName}
                   </h1>
-                  <div className="flex gap-4 text-[#3B50DF]">
+                  <div className="flex text-[#3B50DF]">
                     <div 
-                      className="bg-gray-100 rounded cursor-pointer" 
+                      className="bg-gray-100 rounded cursor-pointer p-2" 
                       title="Edit Category"
                       onClick={handleEditToCategory}
                     >
                       <FaEdit size={18}/>
                     </div>
                     <div 
-                      className="bg-gray-100 rounded cursor-pointer" 
+                      className="bg-gray-100 rounded cursor-pointer p-2" 
                       title="Delete Category"
                       onClick={handleDeleteCategory}
                     >
                       <MdDelete size={18} />
                     </div>
                     <div 
-                      className="bg-gray-100 rounded cursor-pointer" 
+                      className="bg-gray-100 rounded cursor-pointer p-2" 
                       title="Close/Back to Categories"
                       onClick={handleBackToCategories}
                     >
@@ -388,9 +402,7 @@ const CategoryView = () => {
 
                 {/* Category Content with Loading State */}
                 {categoryLoading ? (
-                  <div className="flex items-center justify-center h-64 bg-white rounded-lg shadow">
-                    <p>Loading category details...</p>
-                  </div>
+                  <ContentLoader/>
                 ) : (
                   <div className="bg-white rounded-lg shadow overflow-hidden">
                     {/* Tabs */}
@@ -478,6 +490,7 @@ const CategoryView = () => {
                                     pageSizeOptions={[5]}
                                     disableRowSelectionOnClick
                                     autoHeight
+                                    getRowId={(row) => row.id || row.sku || Math.random().toString(36).substr(2, 9)}
                                     sx={{
                                       border: 'none',
                                       '& .MuiDataGrid-cell:focus': {
@@ -524,9 +537,7 @@ const CategoryView = () => {
               </div>
             ) : (
               <div className="flex items-center justify-center h-full">
-                <p className="text-gray-500">
-                  {loading ? 'Loading category details...' : 'Select a category to view details'}
-                </p>
+                {loading ? <ContentLoader/> : <span className="text-gray-500">Select a category to view details</span>}
               </div>
             )}
           </div>
