@@ -210,28 +210,31 @@ const CategoryView = () => {
         category.description?.toLowerCase().includes(searchTerm.toLowerCase())
       );
 
-  // Material columns setup
+  // Material columns setup with correct field mapping
   const getMaterialColumns = () => {
     // Base columns
     const columns = [
       { 
-        field: 'name', 
+        field: 'materialName', 
         headerName: 'Name', 
         flex: 1,
         minWidth: 180,
         renderCell: (params) => (
           <div className="flex items-center mt-2">
-            <div className={`w-2 h-2 rounded-full mr-2 ${params.row.isActive ? 'bg-green-500' : 'bg-red-500'}`}></div>
-            {params.row.image && (
+            <div className={`w-2 h-2 rounded-full mr-2 ${params.row.materialStatus === 'ACTIVE' ? 'bg-green-500' : 'bg-red-500'}`}></div>
+            {params.row.materialImageUrl && (
               <div>
                 <img
-                  alt={`${params.row.name} logo`}
-                  src={params.row.image}
+                  alt={`${params.row.materialName} logo`}
+                  src={params.row.materialImageUrl}
                   className="size-10 border-2 border-slate-300 mr-2"
+                  onError={(e) => {
+                    e.target.style.display = 'none';
+                  }}
                 />
               </div>
             )}
-            <div className="text-sm font-medium text-gray-900">{params.row.name}</div>
+            <div className="text-sm font-medium text-gray-900">{params.row.materialName}</div>
           </div>
         ),
         headerAlign: 'left',
@@ -239,7 +242,7 @@ const CategoryView = () => {
         headerClassName: 'name-column-header',
       },
       { 
-        field: 'sku', 
+        field: 'materialSKU', 
         headerName: 'SKU', 
         flex: 0.7,
         minWidth: 120,
@@ -252,7 +255,7 @@ const CategoryView = () => {
     if (!isMobile) {
       columns.push(
         { 
-          field: 'description', 
+          field: 'materialDescription', 
           headerName: 'Description', 
           flex: 1,
           minWidth: 200,
@@ -260,22 +263,25 @@ const CategoryView = () => {
           align: 'left'
         },
         { 
-          field: 'inStock', 
+          field: 'quantityInHand', 
           headerName: 'In Stock', 
-          flex: 0.5,
-          minWidth: 100,
-          headerAlign: 'left',
-          align: 'left'
-        },
-        { 
-          field: 'price', 
-          headerName: 'Price', 
           flex: 0.5,
           minWidth: 100,
           headerAlign: 'left',
           align: 'left',
           renderCell: (params) => (
             <span>{params.value?.toFixed(2) || '0.00'}</span>
+          )
+        },
+        { 
+          field: 'materialPurchasePrice', 
+          headerName: 'Price', 
+          flex: 0.5,
+          minWidth: 100,
+          headerAlign: 'left',
+          align: 'left',
+          renderCell: (params) => (
+            <span>LKR. {params.value?.toFixed(2) || '0.00'}</span>
           )
         }
       );
@@ -452,7 +458,10 @@ const CategoryView = () => {
                     {/* Tab Content */}
                     <div className="p-6">
                       {activeTab === 'overview' ? (
-                        <div>
+                        <div className="max-h-[calc(100vh-270px)] overflow-y-auto" style={{
+                          scrollbarWidth: 'thin',
+                          scrollbarColor: '#3B50DF #D9D9D9'
+                        }}>
                           {/* General Information */}
                           <div className="mb-8">
                             <h2 className="text-lg font-medium mb-4">General Information</h2>
@@ -467,58 +476,41 @@ const CategoryView = () => {
                               </div>
                               <div className="flex">
                                 <span className="w-32 text-gray-400">Description</span>
-                                <span>{selectedCategory.description || 'No description available'}</span>
+                                <span>{selectedCategory.categoryDescription || 'No description available'}</span>
                               </div>
                               <div className="flex">
                                 <span className="w-32 text-gray-400">Status</span>
                                 <span>{selectedCategory.categoryStatus?.toLowerCase()}</span>
                               </div>
-                            </div>
-                          </div>
-
-                          {/* Categorization */}
-                          <div className="mb-8">
-                            <h2 className="text-lg font-medium mb-4">Categorization</h2>
-                            <div className="space-y-3">
-                              {isSubcategory(selectedCategory) ? (
+                              {selectedCategory.parentCategoryName && (
                                 <div className="flex">
                                   <span className="w-32 text-gray-400">Parent Category</span>
-                                  <span className="bg-[#3119C3] text-black text-xs px-2 py-1 rounded-md">
-                                    {selectedCategory.categoryName}
-                                  </span>
-                                  
-                                </div>
-                              ) : (
-                                <div className="flex">
-                                  <span className="w-32 text-gray-400">Sub Category</span>
-                                  <span className="bg-[#A0B2F9] text-black text-xs px-2 py-1 rounded-md">
-                                    {selectedCategory.categoryName}
-                                  </span>
+                                  <span>{selectedCategory.parentCategoryName}</span>
                                 </div>
                               )}
                             </div>
                           </div>
 
-                          {/* Materials Section - Only show if materials exist */}
-                          {selectedCategory.materials && selectedCategory.materials.length > 0 ? (
+                          {/* Materials Section - Using materialTableViewDtoList */}
+                          {selectedCategory.materialTableViewDtoList && selectedCategory.materialTableViewDtoList.length > 0 ? (
                             <div>
                               <div className="flex justify-between items-center mb-4">
-                                <h2 className="text-lg font-medium">Materials</h2>
+                                <h2 className="text-lg font-medium">Materials ({selectedCategory.materialTableViewDtoList.length})</h2>
                               </div>
                               
                               {/* DataGrid with ThemeProvider */}
                               <div className="w-full overflow-x-auto">
                                 <ThemeProvider theme={customTheme}>
                                   <DataGrid 
-                                    rows={selectedCategory.materials} 
+                                    rows={selectedCategory.materialTableViewDtoList} 
                                     columns={getMaterialColumns()} 
                                     pagination
                                     paginationModel={paginationModel}
                                     onPaginationModelChange={setPaginationModel}
-                                    pageSizeOptions={[5]}
+                                    pageSizeOptions={[5, 10, 25]}
                                     disableRowSelectionOnClick
                                     autoHeight
-                                    getRowId={(row) => row.id || row.sku || Math.random().toString(36).substr(2, 9)}
+                                    getRowId={(row) => row.materialId}
                                     sx={{
                                       border: 'none',
                                       '& .MuiDataGrid-cell:focus': {
