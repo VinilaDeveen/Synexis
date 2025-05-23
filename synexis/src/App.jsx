@@ -13,6 +13,7 @@ import UnitView from "./pages/UnitView";
 import MaterialPage from "./pages/Material";
 import AddMaterialPage from "./pages/AddMaterial";
 import MaterialView from "./pages/MaterialView";
+import EmployeePage from "./pages/Employee";
 
 function App() {
 
@@ -40,6 +41,8 @@ function App() {
           <Route path="/addmaterial" element={<AddMaterialPage />} />
           <Route path="/editmaterial/:id" element={<AddMaterialPage />} />
           <Route path="/materialView/:id" element={<MaterialView />} />
+
+          <Route path="/employee" element={<EmployeePage />} />
         </Routes>
       </NotificationProvider>
     </Router>

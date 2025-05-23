@@ -53,8 +53,6 @@ const UnitView = () => {
         
         if (response && response.data) {
           setActivityLogs(response.data);
-        } else {
-          console.log('No activity logs found');
         }
       } catch (error) {
         console.error('Error fetching activity logs:', error);

@@ -193,7 +193,6 @@ const AddMaterialPage = () => {
         try {
           const response = await materialService.getById(id);
           const materialData = response.data;
-          console.log(materialData);
           
           setFormData({
             name: materialData.materialName,
@@ -366,12 +365,10 @@ const handleOtherUnitChange = (e) => {
         await materialService.update(id, formDataToSend);
       } else {
         await materialService.create(formDataToSend);
-        console.log(formDataToSend);
       }
       // Redirect to materials list page after successful operation
       navigate('/material');
     } catch (err) {
-      console.log(formData);
       console.error('Error saving material:', err);
       isEditMode
         ? notifyError('Failed to update material. Please try again.')

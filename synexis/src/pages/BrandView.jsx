@@ -521,7 +521,7 @@ function BrandView() {
                           {selectedBrand.materials && selectedBrand.materials.length > 0 ? (
                             <div>
                               <div className="flex justify-between items-center mb-4">
-                                <h2 className="text-lg font-medium">Materials</h2>
+                                <h2 className="text-lg font-medium">Materials ({selectedBrand.materials.length})</h2>
                               </div>
                               
                               {/* DataGrid with ThemeProvider */}

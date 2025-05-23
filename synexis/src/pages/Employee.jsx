@@ -18,12 +18,12 @@ import { DataGrid } from '@mui/x-data-grid';
 import { createTheme, ThemeProvider } from '@mui/material/styles';
 import { ToastContainer } from 'react-toastify';
 import { useNotification } from '../hooks/useNotification';
-import { materialService } from '../services/materialService';
+import { employeeService } from '../services/employeeService';
 import { recentActivityService } from '../services/recentActivityService';
 
-const MaterialPage = () => {
+const EmployeePage = () => {
   const { notifySuccess, notifyError, notifyWarning, notifyDefault } = useNotification();
-  const [materials, setMaterials] = useState([]);
+  const [employees, setEmployees] = useState([]);
   const navigate = useNavigate();
   
   // State for recent activities panel and sidebar visibility
@@ -46,13 +46,13 @@ const MaterialPage = () => {
     const fetchActivities = async () => {
       try {
         setLoading(true);
-        const response = await recentActivityService.getAllMaterialActivity();
+        const response = await recentActivityService.getAllEmployeeActivity();
         if (response && response.data) {
           setRecentActivities(response.data);
         }
       } catch (error) {
         if (isInitialLoad.current){
-          console.error('Error fetching categories:', error);
+          console.error('Error fetching activities:', error);
           notifyError(`Failed to load recent activities: ${error.message || 'Unknown error'}`);
           isInitialLoad.current = false;
         }
@@ -61,7 +61,7 @@ const MaterialPage = () => {
       }
     };
 
-    // Fetch the categories
+    // Fetch the activities
     fetchActivities();
   }, []);
 
@@ -86,29 +86,29 @@ const MaterialPage = () => {
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
-  // Fetch materials from API
+  // Fetch employees from API
   useEffect(() => {
-    const fetchMaterials = async () => {
+    const fetchEmployees = async () => {
       try {
         setLoading(true);
         // In a real app this would be an API call
-        const response = await materialService.getAll();
+        const response = await employeeService.getAll();
         if (response && response.data) {
-            setMaterials(response.data);
+            setEmployees(response.data);
         }
         setLoading(false);
       } catch (error) {
         if (isInitialLoad.current){
-          console.error('Error fetching materials:', error);
-          notifyError(`Failed to load materials: ${error.message || 'Unknown error'}`);
+          console.error('Error fetching employees:', error);
+          notifyError(`Failed to load employees: ${error.message || 'Unknown error'}`);
           isInitialLoad.current = false;
         }
         setLoading(false);
       }
     };
 
-    // Fetch the materials
-    fetchMaterials();
+    // Fetch the employees
+    fetchEmployees();
   }, []);
 
   // We need to check loading state before returning the full component
@@ -138,7 +138,7 @@ const MaterialPage = () => {
         field: 'name', 
         headerName: 'Name', 
         flex: 0,
-        width: 280,
+        width: 220,
         renderCell: renderNameCell,
         headerAlign: 'left',
         align: 'left',
@@ -159,42 +159,31 @@ const MaterialPage = () => {
     // Additional columns based on screen size
     const additionalColumns = [
       { 
-        field: 'sku', 
-        headerName: 'SKU', 
-        width: 200,
-        headerAlign: 'left',
-        align: 'left'
-      },
-      { 
-        field: 'description', 
-        headerName: 'Description', 
-        flex: 1,
-        minWidth: 120,
-        headerAlign: 'left',
-        align: 'left'
-      },
-      { 
-        field: 'stockLevel', // Changed from inStock to stockLevel to match data model
-        headerName: 'In Stock', 
-        width: 100,
-        headerAlign: 'left',
-        align: 'left'
-      },
-      { 
-        field: 'costPrice',
-        headerName: 'Price', 
+        field: 'role', 
+        headerName: 'Role', 
         width: 120,
         headerAlign: 'left',
-        align: 'left',
-        renderCell: (params) => {
-          const price = params.value || 0;
-          return <span>LKR {price.toFixed(2)}</span>;
-        }
-      }
+        align: 'left'
+      },
+      { 
+        field: 'phoneNumber', 
+        headerName: 'Phone Number', 
+        width: 150,
+        headerAlign: 'left',
+        align: 'left'
+      },
+      { 
+        field: 'email', 
+        headerName: 'Email', 
+        flex: 1,
+        minWidth: 200,
+        headerAlign: 'left',
+        align: 'left'
+      },
     ];
     
     return isMobile 
-      ? [baseColumns[0], additionalColumns[0], additionalColumns[2], baseColumns[1]] 
+      ? [baseColumns[0], additionalColumns[0], baseColumns[1]] 
       : [...baseColumns.slice(0, 1), ...additionalColumns, baseColumns[1]];
   };
   
@@ -234,46 +223,45 @@ const MaterialPage = () => {
     setSearchTerm(e.target.value);
   };
   
-  const handleAddMaterial = () => {
-    navigate('/addMaterial');
-    notifyDefault('Add Material page coming soon');
+  const handleAddEmployee = () => {
+    navigate('/addEmployee');
+    notifyDefault('Add Employee page coming soon');
   };
 
-  const handleEditMaterial = (id) => {
-    navigate(`/editMaterial/${id}`);
-    notifyDefault(`Edit Material ID: ${id} page coming soon`);
+  const handleEditEmployee = (id) => {
+    navigate(`/editEmployee/${id}`);
+    notifyDefault(`Edit Employee ID: ${id} page coming soon`);
   };
 
-  const handleDeleteMaterial = (id) => {
+  const handleDeleteEmployee = (id) => {
     try {
-      // Find the material being deleted
-      const materialToDelete = materials.find(material => material.materialId === id);
-      const materialName = materialToDelete?.name || 'Material';
+      // Find the employee being deleted
+      const employeeToDelete = employees.find(employee => employee.employeeId === id);
+      const employeeName = employeeToDelete?.name || 'Employee';
       
       // Simulate API call for deletion
-      // materialService.delete(id);
-      notifySuccess(`Material "${materialName}" successfully deleted`);
+      // employeeService.delete(id);
+      notifySuccess(`Employee "${employeeName}" successfully deleted`);
     } catch (error) {
-      notifyError(`Error deleting material: ${error.message || 'Unknown error'}`);
+      notifyError(`Error deleting employee: ${error.message || 'Unknown error'}`);
     }
   };
 
-  const handleViewMaterial = (id) => {
-    const material = materials.find(material => material.materialId === id);
-    if (material) {
-      const materialName = material.name;
-      notifyDefault(`Viewing details for "${materialName}"`);
+  const handleViewEmployee = (id) => {
+    const employee = employees.find(employee => employee.employeeId === id);
+    if (employee) {
+      const employeeName = employee.employeeName;
+      notifyDefault(`Viewing details for "${employeeName}"`);
     } else {
       notifyWarning('View details functionality coming soon');
     }
   };
 
   // Custom render components for DataGrid
-  // Fixed renderNameCell function
   const renderNameCell = (params) => {
-    const material = materials.find(m => m.materialId === params.row.id) || {};
-    const isActive = material.materialStatus === 'ACTIVE'; // Changed to check boolean instead of string
-    const displayName = params.value; // Direct value is just the name
+    const employee = employees.find(e => e.employeeId === params.row.id) || {};
+    const isActive = employee.employeeStatus === 'ACTIVE';
+    const displayName = params.value;
 
     return (
       <div className="flex items-center">
@@ -283,9 +271,9 @@ const MaterialPage = () => {
             <ImageLoader />
           ) : (
             <img
-              alt={`${material.name} logo`}
-              src={`http://localhost:8080/api/synexis/material/image/${material.materialId}`}
-              className="size-10 border-2 border-slate-300"
+              alt={`${employee.name} avatar`}
+              src={`http://localhost:8080/api/synexis/employee/image/${employee.employeeId}?t=${new Date().getTime()}`}
+              className="size-10 rounded-full border-2 border-slate-300"
             />
           )}
         </div>
@@ -302,26 +290,26 @@ const MaterialPage = () => {
       <div className="flex gap-2 md:gap-4 mt-4">
         <div 
           className="text-[#3B50DF] hover:text-blue-900 cursor-pointer"
-          onClick={() => handleEditMaterial(params.id)}
-          title="Edit Material"
+          onClick={() => handleEditEmployee(params.id)}
+          title="Edit Employee"
         >
           <FaEdit size={isMobile ? 16 : 18} />
         </div>
         <div 
           className="text-[#3B50DF] hover:text-red-500 cursor-pointer"
-          onClick={() => handleDeleteMaterial(params.id)}
-          title="Delete Material"
+          onClick={() => handleDeleteEmployee(params.id)}
+          title="Delete Employee"
         >
           <MdDelete size={isMobile ? 16 : 18} />
         </div>
         <Link 
-          to={`/materialView/${params.id}`} 
-          state={{ selectedMaterialId: params.id }}
+          to={`/employeeView/${params.id}`} 
+          state={{ selectedEmployeeId: params.id }}
         >
           <div 
             className="text-[#3B50DF] hover:text-green-500 cursor-pointer"
-            title="View Material Details"
-            onClick={() => handleViewMaterial(params.id)}
+            title="View Employee Details"
+            onClick={() => handleViewEmployee(params.id)}
           >
             <FaEye size={isMobile ? 16 : 18} />
           </div>
@@ -330,24 +318,24 @@ const MaterialPage = () => {
     );
   };
 
-  // Filter materials based on search term
-  const filteredMaterials = searchTerm.trim() === '' 
-    ? materials 
-    : materials.filter(material => 
-        material.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        material.sku.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        (material.description && material.description.toLowerCase().includes(searchTerm.toLowerCase()))
+  // Filter employees based on search term
+  const filteredEmployees = searchTerm.trim() === '' 
+    ? employees 
+    : employees.filter(employee => 
+        employee.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        employee.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        employee.phoneNumber.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        (employee.role && employee.role.toLowerCase().includes(searchTerm.toLowerCase()))
       );
 
-  // Prepare data for DataGrid - fixed to match actual data structure
-  const rows = filteredMaterials.map(material => ({
-    id: material.materialId,
-    name: material.materialName,
-    sku: material.materialSKU,
-    description: material.materialDescription || '',
-    stockLevel: material.materialStockLevel || 0,
-    costPrice: material.materialPurchasePrice || 0,
-    actions: material.materialId
+  // Prepare data for DataGrid
+  const rows = filteredEmployees.map(employee => ({
+    id: employee.employeeId,
+    name: employee.employeeName,
+    role: employee.role,
+    phoneNumber: employee.employeePhoneNumber,
+    email: employee.employeeEmail,
+    actions: employee.employeeId
   }));
 
   return (
@@ -381,11 +369,11 @@ const MaterialPage = () => {
           {/* Toast notifications */}
           <ToastContainer className="mt-[70px]" />
 
-          <h1 className="text-xl md:text-2xl font-semibold mb-2 md:mb-4 pl-2">Materials</h1>
+          <h1 className="text-xl md:text-2xl font-semibold mb-2 md:mb-4 pl-2">Employee</h1>
 
-          {/* Materials Table Card */}
+          {/* Employees Table Card */}
           <div className="bg-white rounded-lg shadow">
-            {/* Search and Add Material */}
+            {/* Search and Add Employee */}
             <div className="p-3 md:p-4 flex flex-col sm:flex-row sm:justify-between gap-3 sm:gap-0">
               <div className="flex items-center w-full sm:w-auto">
                 <div 
@@ -408,11 +396,11 @@ const MaterialPage = () => {
                 </div>
               </div>
               <button 
-                onClick={handleAddMaterial}
+                onClick={handleAddEmployee}
                 className="bg-[#3C50E0] hover:bg-blue-700 text-white px-3 py-2 text-sm rounded-lg flex items-center justify-center sm:justify-start gap-2"
               >
                 <Plus size={16} />
-                <span>Add Material</span>
+                <span>Add Employee</span>
               </button>
             </div>
             <hr />
@@ -469,4 +457,4 @@ const MaterialPage = () => {
   );
 };
 
-export default MaterialPage;
+export default EmployeePage;

@@ -91,8 +91,6 @@ function MaterialView() {
         
         if (response && response.data) {
           setActivityLogs(response.data);
-        } else {
-          console.log('No activity logs found');
         }
       } catch (error) {
         console.error('Error fetching activity logs:', error);
@@ -139,7 +137,6 @@ function MaterialView() {
         const response = await materialService.getById(id);
         if (response && response.data) {
           setSelectedMaterial(response.data);
-          console.log(response.data);
         } else {
           notifyWarning('Material not found');
         }
