@@ -10,6 +10,15 @@ import BrandView from "./pages/BrandView";
 import UnitPage from "./pages/Unit";
 import AddUnitPage from "./pages/AddUnit";
 import UnitView from "./pages/UnitView";
+import MaterialPage from "./pages/Material";
+import AddMaterialPage from "./pages/AddMaterial";
+import MaterialView from "./pages/MaterialView";
+import EmployeePage from "./pages/Employee";
+import AddEmployeePage from "./pages/AddEmployee";
+import EmployeeView from "./pages/EmployeeView";
+import CustomerPage from "./pages/Customer";
+import CustomerView from "./pages/CustomerView";
+import AddCustomerPage from "./pages/AddCustomer";
 
 function App() {
 
@@ -32,6 +41,21 @@ function App() {
           <Route path="/addunit" element={<AddUnitPage />} />
           <Route path="/editunit/:id" element={<AddUnitPage />} />
           <Route path="/unitView/:id" element={<UnitView />} />
+
+          <Route path="/material" element={<MaterialPage />} />
+          <Route path="/addmaterial" element={<AddMaterialPage />} />
+          <Route path="/editmaterial/:id" element={<AddMaterialPage />} />
+          <Route path="/materialView/:id" element={<MaterialView />} />
+
+          <Route path="/employee" element={<EmployeePage />} />
+          <Route path="/addemployee" element={<AddEmployeePage />} />
+          <Route path="/editemployee/:id" element={<AddEmployeePage />} />
+          <Route path="/employeeView/:id" element={<EmployeeView />} />
+
+          <Route path="/customer" element={<CustomerPage />} />
+          <Route path="/addcustomer" element={<AddCustomerPage />} />
+          <Route path="/editcustomer/:id" element={<AddCustomerPage />} />
+          <Route path="/customerView/:id" element={<CustomerView />} />
         </Routes>
       </NotificationProvider>
     </Router>

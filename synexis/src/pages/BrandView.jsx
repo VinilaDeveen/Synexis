@@ -128,8 +128,8 @@ function BrandView() {
       fetchBrands();
     }, []);
 
-  // Fetch selected brand by ID when selectedBrandId changes
-  useEffect(() => {
+    // Fetch selected brand by ID when selectedBrandId changes
+    useEffect(() => {
     const fetchBrandById = async (id) => {
       if (!id) return;
           
@@ -137,7 +137,21 @@ function BrandView() {
         setBrandLoading(true);
         const response = await brandService.getById(id);
         if (response && response.data) {
-          setSelectedBrand(response.data);
+          // Map the API response to match component expectations
+          const brandData = {
+            ...response.data,
+            materials: response.data.materialTableViewDtoList?.map(material => ({
+              id: material.materialId, // DataGrid requires 'id' field
+              name: material.materialName,
+              sku: material.materialSKU,
+              description: material.materialDescription,
+              inStock: material.quantityInHand,
+              price: material.materialPurchasePrice,
+              isActive: material.materialStatus === 'ACTIVE',
+              image: material.materialImageUrl
+            })) || []
+          };
+          setSelectedBrand(brandData);
         } else {
           notifyWarning('Brand not found');
         }
@@ -275,7 +289,7 @@ function BrandView() {
             headerAlign: 'left',
             align: 'left',
             renderCell: (params) => (
-              <span>{params.value?.toFixed(2) || '0.00'}</span>
+              <span>LKR. {params.value?.toFixed(2) || '0.00'}</span>
             )
           }
         );
@@ -453,7 +467,10 @@ function BrandView() {
                     {/* Tab Content */}
                     <div className="p-6">
                       {activeTab === 'overview' ? (
-                        <div>
+                        <div className="max-h-[calc(100vh-270px)] overflow-y-auto" style={{
+                          scrollbarWidth: 'thin',
+                          scrollbarColor: '#3B50DF #D9D9D9'
+                        }}>
                           {/* General Information */}
                           <div className="flex gap-20 mb-8">
                             <div className=''>
@@ -504,7 +521,7 @@ function BrandView() {
                           {selectedBrand.materials && selectedBrand.materials.length > 0 ? (
                             <div>
                               <div className="flex justify-between items-center mb-4">
-                                <h2 className="text-lg font-medium">Materials</h2>
+                                <h2 className="text-lg font-medium">Materials ({selectedBrand.materials.length})</h2>
                               </div>
                               
                               {/* DataGrid with ThemeProvider */}

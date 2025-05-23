@@ -17,16 +17,14 @@ import { DataGrid } from '@mui/x-data-grid';
 import { createTheme, ThemeProvider } from '@mui/material/styles';
 import { ToastContainer } from 'react-toastify';
 import { useNotification } from '../hooks/useNotification';
-import { unitService } from '../services/unitService';
-import { recentActivityService } from '../services/recentActivityService';
+import { customerService } from '../services/customerService';
 
-const UnitPage = () => {
+const CustomerPage = () => {
   const { notifySuccess, notifyError, notifyWarning, notifyDefault } = useNotification();
-  const [units, setUnits] = useState([]);
+  const [customers, setCustomers] = useState([]);
   const navigate = useNavigate();
   
   // State for recent activities panel and sidebar visibility
-  const [recentActivities, setRecentActivities] = useState('');
   const [showActivities, setShowActivities] = useState(false);
   const [showSidebar, setShowSidebar] = useState(true);
   const [isMobile, setIsMobile] = useState(false);
@@ -38,32 +36,8 @@ const UnitPage = () => {
   });
   const [loading, setLoading] = useState(true); // Start with loading true
   const isInitialLoad = useRef(true);
-
-  // Fetch recent activities from API
-  useEffect(() => {
-    const fetchActivities = async () => {
-      try {
-        setLoading(true);
-        const response = await recentActivityService.getAllUnitActivity();
-        if (response && response.data) {
-          setRecentActivities(response.data);
-        }
-      } catch (error) {
-        if (isInitialLoad.current){
-          console.error('Error fetching categories:', error);
-          notifyError(`Failed to load recent activities: ${error.message || 'Unknown error'}`);
-          isInitialLoad.current = false;
-        }
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    // Fetch the categories
-    fetchActivities();
-  }, []);
   
-  // Check screen size and set mobile state
+  // Check screen size and set mobile state - moved up to run first
   useEffect(() => {
     const handleResize = () => {
       setIsMobile(window.innerWidth < 768);
@@ -84,19 +58,19 @@ const UnitPage = () => {
     return () => window.removeEventListener('resize', handleResize);
   }, []);
   
-  // Fetch units from API
+  // Fetch customers from API
   useEffect(() => {
-    const fetchUnits = async () => {
+    const fetchCustomers = async () => {
       try {
         setLoading(true);
-        const response = await unitService.getAll();
+        const response = await customerService.getAll();
         if (response && response.data) {
-          setUnits(response.data);
+          setCustomers(response.data);
         }
       } catch (error) {
-        if (isInitialLoad.current) {
-          console.error('Error fetching units:', error);
-          notifyError(`Failed to load units: ${error.message || 'Unknown error'}`);
+        if (isInitialLoad.current){
+          console.error('Error fetching customers:', error);
+          notifyError(`Failed to load customers: ${error.message || 'Unknown error'}`);
           isInitialLoad.current = false;
         }
       } finally {
@@ -104,8 +78,8 @@ const UnitPage = () => {
       }
     };
 
-    // Fetch the units
-    fetchUnits();
+    // Fetch the customers
+    fetchCustomers();
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   // We need to check loading state before returning the full component
@@ -117,6 +91,12 @@ const UnitPage = () => {
   const toggleSidebar = () => {
     setShowSidebar(!showSidebar);
   };
+  
+  // Recent activities data
+  const recentActivities = [
+    { item: "Mr. Perera", action: "created by", user: "Steve Johns", date: "10 April 2025 09:23" },
+    { item: "Mr. Silva", action: "updated by", user: "Jane Doe", date: "10 April 2025 08:15" },
+  ];
   
   // Toggle recent activities panel
   const toggleActivitiesPanel = () => {
@@ -163,163 +143,167 @@ const UnitPage = () => {
   const handleSearchChange = (e) => {
     setSearchTerm(e.target.value);
   };
-  
-  const handleAddUnit = () => {
-    notifySuccess('Add unit dialog opened');
-    // Navigate to add unit page
-    navigate('/addunit');
+
+  const handleEditCustomer = (id) => {
+    navigate(`/editCustomer/${id}`);
   };
 
-  const handleEditUnit = (id) => {
-    navigate(`/editunit/${id}`);
+  const handleViewCustomer = (id) => {
+    navigate(`/customerView/${id}`);
   };
 
-  const handleViewUnit = (id) => {
-    navigate(`/unitView/${id}`, { state: { selectedUnitId: id } });
-  };
-
-  const handleDeleteUnit = async (id) => {
+  const handleDeleteCustomer = (id) => {
     try {
-      // Find the unit being deleted
-      const unitToDelete = units.find(unit => unit.unitId === id);
-      const unitName = unitToDelete ? unitToDelete.unitName : 'Unknown';
+      // Find the customer being deleted
+      const customerToDelete = customers.find(customer => customer.customerId === id);
+      const customerName = customerToDelete ? customerToDelete.name || customerToDelete.customerName : 'Unknown';
       
-      // Call API service for deletion
-      const response = await unitService.delete(id);
-      
-      if (response && response.success) {
-        notifySuccess(`Unit "${unitName}" successfully deleted`);
-        // Update local state to reflect the deletion
-        setUnits(units.filter(unit => unit.unitId !== id));
-      } else {
-        notifyError('Failed to delete unit');
-      }
+      // Simulate API call for deletion
+      customerService.delete(id);
+      notifySuccess(`Customer "${customerName}" successfully deleted`);
     } catch (error) {
-      notifyError(`Error deleting unit: ${error.message || 'Unknown error'}`);
+      notifyError(`Error deleting customer: ${error.message || 'Unknown error'}`);
     }
   };
   
-  // Render status indicator for unit name cell
+  // Custom render components for DataGrid - moved up before they're used
   const renderNameCell = (params) => {
-    const isActive = params.row.status === 'ACTIVE';
+    const customer = params.value;
+    const customerStatus = params.row.status;
+    const isActive = customerStatus === 'ACTIVE';
     
     return (
       <div className="flex items-center">
         <div className={`w-2 h-2 rounded-full mr-2 ${isActive ? 'bg-green-500' : 'bg-red-500'}`}></div>
         <div>
-          {params.value}
+          <span className="font-medium text-gray-900">
+            {customer}
+          </span>
         </div>
       </div>
     );
   };
+
+  const renderPhoneCell = (params) => {
+    return (
+      <div className="text-gray-700">
+        {params.value || 'N/A'}
+      </div>
+    );
+  };
+
+  const renderEmailCell = (params) => {
+    return (
+      <div className="text-gray-700">
+        {params.value || 'N/A'}
+      </div>
+    );
+  };
   
-  // Render actions cell
   const renderActionsCell = (params) => {
     return (
-      <div className="flex gap-2 md:gap-4 mt-2">
+      <div className="flex gap-2 md:gap-6 mt-4">
         <div 
           className="text-[#3B50DF] hover:text-blue-900 cursor-pointer"
-          onClick={() => handleEditUnit(params.id)}
-          title="Edit Unit"
+          onClick={() => handleEditCustomer(params.id)}
+          title="Edit Customer"
         >
           <FaEdit size={isMobile ? 16 : 18} />
         </div>
         <div 
           className="text-[#3B50DF] hover:text-red-500 cursor-pointer"
-          onClick={() => handleDeleteUnit(params.id)}
-          title="Delete Unit"
+          onClick={() => handleDeleteCustomer(params.id)}
+          title="Delete Customer"
         >
           <MdDelete size={isMobile ? 16 : 18} />
         </div>
-        <div 
-          className="text-[#3B50DF] hover:text-green-500 cursor-pointer"
-          title="View Unit Details"
-          onClick={() => handleViewUnit(params.id)}
+        <Link 
+          to={`/customerView/${params.id}`} 
+          state={{ selectedCustomerId: params.id }}
         >
-          <FaEye size={isMobile ? 16 : 18} />
-        </div>
+          <div 
+            className="text-[#3B50DF] hover:text-green-500 cursor-pointer"
+            title="View Customer Details"
+            onClick={() => handleViewCustomer(params.id)}
+          >
+            <FaEye size={isMobile ? 16 : 18} />
+          </div>
+        </Link>
       </div>
     );
   };
   
-  // Render boolean values as Yes/No
-  const renderBooleanCell = (params) => {
-    return params.value ? 'Yes' : 'No';
-  };
-  
   // Responsive columns setup
   const getColumns = () => {
-    // Base columns for all screen sizes
+    // Base columns that always show
     const baseColumns = [
       { 
-        field: 'unitName', 
-        headerName: 'Unit Name', 
+        field: 'name', 
+        headerName: 'Name', 
         flex: 1,
         minWidth: 150,
         renderCell: renderNameCell,
+        headerAlign: 'left',
+        align: 'left',
+        headerClassName: 'name-column-header',
       },
       { 
-        field: 'shortName', 
-        headerName: 'Short Name', 
-        flex: 1,
-        minWidth: 120,
-      },
-      { 
-        field: 'allowDecimal', 
-        headerName: 'Allow Decimal', 
-        flex: 1,
-        minWidth: 120,
-        renderCell: renderBooleanCell,
+        field: 'actions', 
+        headerName: 'Actions', 
+        width: 150, 
+        renderCell: renderActionsCell,
+        sortable: false,
+        filterable: false,
+        headerAlign: 'left',
+        align: 'left'
       },
     ];
     
     // Additional columns for larger screens
     const additionalColumns = [
       { 
-        field: 'materials', 
-        headerName: 'Materials', 
-        flex: 0.5,
-        minWidth: 100,
-        align: 'center',
-        headerAlign: 'center',
-      }
-    ];
-    
-    // Actions column
-    const actionsColumn = [
+        field: 'phone', 
+        headerName: 'Phone Number', 
+        flex: 0.8,
+        minWidth: 120,
+        renderCell: renderPhoneCell,
+        headerAlign: 'left',
+        align: 'left'
+      },
       { 
-        field: 'actions', 
-        headerName: 'Actions', 
-        width: 140, 
-        renderCell: renderActionsCell,
-        sortable: false,
-        filterable: false,
+        field: 'email', 
+        headerName: 'Email', 
+        flex: 1,
+        minWidth: 180,
+        renderCell: renderEmailCell,
+        headerAlign: 'left',
+        align: 'left'
       }
     ];
     
-    // Return different columns based on screen size
-    return isMobile 
-      ? [...baseColumns, ...actionsColumn] 
-      : [...baseColumns, ...additionalColumns, ...actionsColumn];
+    return isMobile ? baseColumns : [...baseColumns.slice(0, 1), ...additionalColumns, baseColumns[1]];
   };
   
-  // Filter units based on search term
-  const filteredUnits = searchTerm.trim() === '' 
-    ? units 
-    : units.filter(unit => 
-        (unit.unitName && unit.unitName.toLowerCase().includes(searchTerm.toLowerCase())) ||
-        (unit.unitShortName && unit.unitShortName.toLowerCase().includes(searchTerm.toLowerCase()))
+  // Filter customers based on search term
+  const filteredCustomers = searchTerm.trim() === '' 
+    ? customers 
+    : customers.filter(customer => 
+        (customer.name && customer.name.toLowerCase().includes(searchTerm.toLowerCase())) ||
+        (customer.customerName && customer.customerName.toLowerCase().includes(searchTerm.toLowerCase())) ||
+        (customer.fullName && customer.fullName.toLowerCase().includes(searchTerm.toLowerCase())) ||
+        (customer.email && customer.email.toLowerCase().includes(searchTerm.toLowerCase())) ||
+        (customer.phone && customer.phone.toLowerCase().includes(searchTerm.toLowerCase())) ||
+        (customer.phoneNumber && customer.phoneNumber.toLowerCase().includes(searchTerm.toLowerCase()))
       );
   
   // Prepare data for DataGrid
-  const rows = filteredUnits.map(unit => ({
-    id: unit.unitId,
-    unitName: unit.unitName,
-    shortName: unit.unitShortName,
-    allowDecimal: unit.unitAllowDecimal,
-    status: unit.unitStatus,
-    materials: unit.materialCount,
-    actions: unit.unitId
+  const rows = filteredCustomers.map(customer => ({
+    id: customer.customerId,
+    name: customer.customerName,
+    phone: customer.customerPhoneNumber,
+    email: customer.customerEmail,
+    status: customer.customerStatus,
+    actions: customer.customerId
   }));
 
   return (
@@ -353,11 +337,11 @@ const UnitPage = () => {
         <div className="p-2 sm:p-4 md:p-6 flex-1 overflow-auto">
           {/* Toast notifications */}
           <ToastContainer className="mt-[70px]" />
-          <h1 className="text-xl md:text-2xl font-semibold mb-2 md:mb-4 pl-2">Unit of Measurement</h1>
+          <h1 className="text-xl md:text-2xl font-semibold mb-2 md:mb-4 pl-2">Customers</h1>
 
-          {/* Unit Table Card */}
+          {/* Customer Table Card */}
           <div className="bg-white rounded-lg shadow">
-            {/* Search and Add Unit */}
+            {/* Search and Add Customer */}
             <div className="p-3 md:p-4 flex flex-col sm:flex-row sm:justify-between gap-3 sm:gap-0">
               <div className="flex items-center w-full sm:w-auto">
                 <div 
@@ -380,13 +364,14 @@ const UnitPage = () => {
                   />
                 </div>
               </div>
-              <button 
-                onClick={handleAddUnit}
-                className="bg-[#3C50E0] hover:bg-blue-700 text-white px-3 py-2 text-sm rounded-lg flex items-center justify-center sm:justify-start gap-2 focus:outline-none"
-              >
-                <Plus size={16} />
-                <span>Add Unit</span>
-              </button>
+              <Link to="/addCustomer">
+                <button 
+                  className="bg-[#3C50E0] hover:bg-blue-700 text-white px-3 py-2 text-sm rounded-lg flex items-center justify-center sm:justify-start gap-2 focus:outline-none"
+                >
+                  <Plus size={16} />
+                  <span>Add Customer</span>
+                </button>
+              </Link>
             </div>
             <hr />
 
@@ -412,6 +397,10 @@ const UnitPage = () => {
                     '& .MuiDataGrid-row:hover': {
                       backgroundColor: '#f8fafc',
                     },
+                    '& .name-column-header .MuiDataGrid-columnHeaderTitleContainer': {
+                      paddingLeft: '15px',
+                      fontWeight: '600',
+                    },
                     // Responsive font sizes
                     fontSize: isMobile ? '0.8rem' : '0.875rem',
                   }}
@@ -422,7 +411,7 @@ const UnitPage = () => {
         </div>
       </div>
 
-      {/* Recent Activities Panel */}
+      {/* Recent Activities Panel - Always render but control visibility with prop */}
       <RecentActivities
         isVisible={showActivities} 
         activities={recentActivities}
@@ -440,4 +429,4 @@ const UnitPage = () => {
   );
 };
 
-export default UnitPage;
+export default CustomerPage;

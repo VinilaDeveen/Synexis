@@ -5,7 +5,8 @@ import {
   FullPageLoader, 
   InlineLoader, 
   ButtonLoader,
-  ContentLoader 
+  ContentLoader, 
+  ImageLoader
 } from '../components/loaders';
 import { useState, useEffect, useRef } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
@@ -17,12 +18,12 @@ import { DataGrid } from '@mui/x-data-grid';
 import { createTheme, ThemeProvider } from '@mui/material/styles';
 import { ToastContainer } from 'react-toastify';
 import { useNotification } from '../hooks/useNotification';
-import { unitService } from '../services/unitService';
+import { materialService } from '../services/materialService';
 import { recentActivityService } from '../services/recentActivityService';
 
-const UnitPage = () => {
+const MaterialPage = () => {
   const { notifySuccess, notifyError, notifyWarning, notifyDefault } = useNotification();
-  const [units, setUnits] = useState([]);
+  const [materials, setMaterials] = useState([]);
   const navigate = useNavigate();
   
   // State for recent activities panel and sidebar visibility
@@ -36,7 +37,8 @@ const UnitPage = () => {
     pageSize: 5,
     page: 0,
   });
-  const [loading, setLoading] = useState(true); // Start with loading true
+
+  const [loading, setLoading] = useState(true);
   const isInitialLoad = useRef(true);
 
   // Fetch recent activities from API
@@ -44,7 +46,7 @@ const UnitPage = () => {
     const fetchActivities = async () => {
       try {
         setLoading(true);
-        const response = await recentActivityService.getAllUnitActivity();
+        const response = await recentActivityService.getAllMaterialActivity();
         if (response && response.data) {
           setRecentActivities(response.data);
         }
@@ -62,7 +64,7 @@ const UnitPage = () => {
     // Fetch the categories
     fetchActivities();
   }, []);
-  
+
   // Check screen size and set mobile state
   useEffect(() => {
     const handleResize = () => {
@@ -83,30 +85,31 @@ const UnitPage = () => {
     // Cleanup
     return () => window.removeEventListener('resize', handleResize);
   }, []);
-  
-  // Fetch units from API
+
+  // Fetch materials from API
   useEffect(() => {
-    const fetchUnits = async () => {
+    const fetchMaterials = async () => {
       try {
         setLoading(true);
-        const response = await unitService.getAll();
+        // In a real app this would be an API call
+        const response = await materialService.getAll();
         if (response && response.data) {
-          setUnits(response.data);
+            setMaterials(response.data);
         }
+        setLoading(false);
       } catch (error) {
-        if (isInitialLoad.current) {
-          console.error('Error fetching units:', error);
-          notifyError(`Failed to load units: ${error.message || 'Unknown error'}`);
+        if (isInitialLoad.current){
+          console.error('Error fetching materials:', error);
+          notifyError(`Failed to load materials: ${error.message || 'Unknown error'}`);
           isInitialLoad.current = false;
         }
-      } finally {
         setLoading(false);
       }
     };
 
-    // Fetch the units
-    fetchUnits();
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+    // Fetch the materials
+    fetchMaterials();
+  }, []);
 
   // We need to check loading state before returning the full component
   if (loading) {
@@ -117,15 +120,82 @@ const UnitPage = () => {
   const toggleSidebar = () => {
     setShowSidebar(!showSidebar);
   };
-  
+
   // Toggle recent activities panel
   const toggleActivitiesPanel = () => {
     setShowActivities(!showActivities);
   };
-  
-  // Close recent activities panel
+
   const closeActivitiesPanel = () => {
     setShowActivities(false);
+  };
+
+  // Define columns for the DataGrid
+  const getColumns = () => {
+    // Base columns that always show
+    const baseColumns = [
+      { 
+        field: 'name', 
+        headerName: 'Name', 
+        flex: 0,
+        width: 280,
+        renderCell: renderNameCell,
+        headerAlign: 'left',
+        align: 'left',
+        headerClassName: 'name-column-header',
+      },
+      { 
+        field: 'actions', 
+        headerName: 'Actions', 
+        width: 120, 
+        renderCell: renderActionsCell,
+        sortable: false,
+        filterable: false,
+        headerAlign: 'left',
+        align: 'left'
+      },
+    ];
+    
+    // Additional columns based on screen size
+    const additionalColumns = [
+      { 
+        field: 'sku', 
+        headerName: 'SKU', 
+        width: 200,
+        headerAlign: 'left',
+        align: 'left'
+      },
+      { 
+        field: 'description', 
+        headerName: 'Description', 
+        flex: 1,
+        minWidth: 120,
+        headerAlign: 'left',
+        align: 'left'
+      },
+      { 
+        field: 'stockLevel', // Changed from inStock to stockLevel to match data model
+        headerName: 'In Stock', 
+        width: 100,
+        headerAlign: 'left',
+        align: 'left'
+      },
+      { 
+        field: 'costPrice',
+        headerName: 'Price', 
+        width: 120,
+        headerAlign: 'left',
+        align: 'left',
+        renderCell: (params) => {
+          const price = params.value || 0;
+          return <span>LKR {price.toFixed(2)}</span>;
+        }
+      }
+    ];
+    
+    return isMobile 
+      ? [baseColumns[0], additionalColumns[0], additionalColumns[2], baseColumns[1]] 
+      : [...baseColumns.slice(0, 1), ...additionalColumns, baseColumns[1]];
   };
   
   // Custom theme for DataGrid
@@ -142,7 +212,7 @@ const UnitPage = () => {
             },
             '& .MuiDataGrid-cell': {
               borderBottom: '1px solid #f1f5f9',
-              padding: '8px 16px',
+              paddingLeft: '8px 16px',
             },
             '& .MuiDataGrid-columnSeparator': {
               display: 'none',
@@ -164,167 +234,124 @@ const UnitPage = () => {
     setSearchTerm(e.target.value);
   };
   
-  const handleAddUnit = () => {
-    notifySuccess('Add unit dialog opened');
-    // Navigate to add unit page
-    navigate('/addunit');
+  const handleAddMaterial = () => {
+    navigate('/addMaterial');
+    notifyDefault('Add Material page coming soon');
   };
 
-  const handleEditUnit = (id) => {
-    navigate(`/editunit/${id}`);
+  const handleEditMaterial = (id) => {
+    navigate(`/editMaterial/${id}`);
+    notifyDefault(`Edit Material ID: ${id} page coming soon`);
   };
 
-  const handleViewUnit = (id) => {
-    navigate(`/unitView/${id}`, { state: { selectedUnitId: id } });
-  };
-
-  const handleDeleteUnit = async (id) => {
+  const handleDeleteMaterial = (id) => {
     try {
-      // Find the unit being deleted
-      const unitToDelete = units.find(unit => unit.unitId === id);
-      const unitName = unitToDelete ? unitToDelete.unitName : 'Unknown';
+      // Find the material being deleted
+      const materialToDelete = materials.find(material => material.materialId === id);
+      const materialName = materialToDelete?.name || 'Material';
       
-      // Call API service for deletion
-      const response = await unitService.delete(id);
-      
-      if (response && response.success) {
-        notifySuccess(`Unit "${unitName}" successfully deleted`);
-        // Update local state to reflect the deletion
-        setUnits(units.filter(unit => unit.unitId !== id));
-      } else {
-        notifyError('Failed to delete unit');
-      }
+      // Simulate API call for deletion
+      // materialService.delete(id);
+      notifySuccess(`Material "${materialName}" successfully deleted`);
     } catch (error) {
-      notifyError(`Error deleting unit: ${error.message || 'Unknown error'}`);
+      notifyError(`Error deleting material: ${error.message || 'Unknown error'}`);
     }
   };
-  
-  // Render status indicator for unit name cell
+
+  const handleViewMaterial = (id) => {
+    const material = materials.find(material => material.materialId === id);
+    if (material) {
+      const materialName = material.name;
+      notifyDefault(`Viewing details for "${materialName}"`);
+    } else {
+      notifyWarning('View details functionality coming soon');
+    }
+  };
+
+  // Custom render components for DataGrid
+  // Fixed renderNameCell function
   const renderNameCell = (params) => {
-    const isActive = params.row.status === 'ACTIVE';
-    
+    const material = materials.find(m => m.materialId === params.row.id) || {};
+    const isActive = material.materialStatus === 'ACTIVE'; // Changed to check boolean instead of string
+    const displayName = params.value; // Direct value is just the name
+
     return (
       <div className="flex items-center">
         <div className={`w-2 h-2 rounded-full mr-2 ${isActive ? 'bg-green-500' : 'bg-red-500'}`}></div>
-        <div>
-          {params.value}
+        <div className="mr-2">
+          {loading ? (
+            <ImageLoader />
+          ) : (
+            <img
+              alt={`${material.name} logo`}
+              src={`http://localhost:8080/api/synexis/material/image/${material.materialId}`}
+              className="size-10 border-2 border-slate-300"
+            />
+          )}
+        </div>
+        <div className={isMobile ? "block" : "hidden sm:block"}>
+          <span className="text-black px-2 py-1 rounded-md mr-2 text-sm">{displayName}</span>
         </div>
       </div>
     );
   };
   
-  // Render actions cell
+  // Custom render components for DataGrid
   const renderActionsCell = (params) => {
     return (
-      <div className="flex gap-2 md:gap-4 mt-2">
+      <div className="flex gap-2 md:gap-4 mt-4">
         <div 
           className="text-[#3B50DF] hover:text-blue-900 cursor-pointer"
-          onClick={() => handleEditUnit(params.id)}
-          title="Edit Unit"
+          onClick={() => handleEditMaterial(params.id)}
+          title="Edit Material"
         >
           <FaEdit size={isMobile ? 16 : 18} />
         </div>
         <div 
           className="text-[#3B50DF] hover:text-red-500 cursor-pointer"
-          onClick={() => handleDeleteUnit(params.id)}
-          title="Delete Unit"
+          onClick={() => handleDeleteMaterial(params.id)}
+          title="Delete Material"
         >
           <MdDelete size={isMobile ? 16 : 18} />
         </div>
-        <div 
-          className="text-[#3B50DF] hover:text-green-500 cursor-pointer"
-          title="View Unit Details"
-          onClick={() => handleViewUnit(params.id)}
+        <Link 
+          to={`/materialView/${params.id}`} 
+          state={{ selectedMaterialId: params.id }}
         >
-          <FaEye size={isMobile ? 16 : 18} />
-        </div>
+          <div 
+            className="text-[#3B50DF] hover:text-green-500 cursor-pointer"
+            title="View Material Details"
+            onClick={() => handleViewMaterial(params.id)}
+          >
+            <FaEye size={isMobile ? 16 : 18} />
+          </div>
+        </Link>
       </div>
     );
   };
-  
-  // Render boolean values as Yes/No
-  const renderBooleanCell = (params) => {
-    return params.value ? 'Yes' : 'No';
-  };
-  
-  // Responsive columns setup
-  const getColumns = () => {
-    // Base columns for all screen sizes
-    const baseColumns = [
-      { 
-        field: 'unitName', 
-        headerName: 'Unit Name', 
-        flex: 1,
-        minWidth: 150,
-        renderCell: renderNameCell,
-      },
-      { 
-        field: 'shortName', 
-        headerName: 'Short Name', 
-        flex: 1,
-        minWidth: 120,
-      },
-      { 
-        field: 'allowDecimal', 
-        headerName: 'Allow Decimal', 
-        flex: 1,
-        minWidth: 120,
-        renderCell: renderBooleanCell,
-      },
-    ];
-    
-    // Additional columns for larger screens
-    const additionalColumns = [
-      { 
-        field: 'materials', 
-        headerName: 'Materials', 
-        flex: 0.5,
-        minWidth: 100,
-        align: 'center',
-        headerAlign: 'center',
-      }
-    ];
-    
-    // Actions column
-    const actionsColumn = [
-      { 
-        field: 'actions', 
-        headerName: 'Actions', 
-        width: 140, 
-        renderCell: renderActionsCell,
-        sortable: false,
-        filterable: false,
-      }
-    ];
-    
-    // Return different columns based on screen size
-    return isMobile 
-      ? [...baseColumns, ...actionsColumn] 
-      : [...baseColumns, ...additionalColumns, ...actionsColumn];
-  };
-  
-  // Filter units based on search term
-  const filteredUnits = searchTerm.trim() === '' 
-    ? units 
-    : units.filter(unit => 
-        (unit.unitName && unit.unitName.toLowerCase().includes(searchTerm.toLowerCase())) ||
-        (unit.unitShortName && unit.unitShortName.toLowerCase().includes(searchTerm.toLowerCase()))
+
+  // Filter materials based on search term
+  const filteredMaterials = searchTerm.trim() === '' 
+    ? materials 
+    : materials.filter(material => 
+        material.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        material.sku.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        (material.description && material.description.toLowerCase().includes(searchTerm.toLowerCase()))
       );
-  
-  // Prepare data for DataGrid
-  const rows = filteredUnits.map(unit => ({
-    id: unit.unitId,
-    unitName: unit.unitName,
-    shortName: unit.unitShortName,
-    allowDecimal: unit.unitAllowDecimal,
-    status: unit.unitStatus,
-    materials: unit.materialCount,
-    actions: unit.unitId
+
+  // Prepare data for DataGrid - fixed to match actual data structure
+  const rows = filteredMaterials.map(material => ({
+    id: material.materialId,
+    name: material.materialName,
+    sku: material.materialSKU,
+    description: material.materialDescription || '',
+    stockLevel: material.materialStockLevel || 0,
+    costPrice: material.materialPurchasePrice || 0,
+    actions: material.materialId
   }));
 
   return (
     <div className="flex w-screen h-screen text-black bg-gray-100 overflow-hidden">
-      
       {/* Mobile Menu Button */}
       {isMobile && !showSidebar && (
         <button 
@@ -353,17 +380,17 @@ const UnitPage = () => {
         <div className="p-2 sm:p-4 md:p-6 flex-1 overflow-auto">
           {/* Toast notifications */}
           <ToastContainer className="mt-[70px]" />
-          <h1 className="text-xl md:text-2xl font-semibold mb-2 md:mb-4 pl-2">Unit of Measurement</h1>
 
-          {/* Unit Table Card */}
+          <h1 className="text-xl md:text-2xl font-semibold mb-2 md:mb-4 pl-2">Materials</h1>
+
+          {/* Materials Table Card */}
           <div className="bg-white rounded-lg shadow">
-            {/* Search and Add Unit */}
+            {/* Search and Add Material */}
             <div className="p-3 md:p-4 flex flex-col sm:flex-row sm:justify-between gap-3 sm:gap-0">
               <div className="flex items-center w-full sm:w-auto">
                 <div 
                   onClick={toggleActivitiesPanel}
                   className="cursor-pointer relative"
-                  title="Recent Activities"
                 >
                   <LuHistory size={20} className="text-[#3B50DF]" />
                 </div>
@@ -381,11 +408,11 @@ const UnitPage = () => {
                 </div>
               </div>
               <button 
-                onClick={handleAddUnit}
-                className="bg-[#3C50E0] hover:bg-blue-700 text-white px-3 py-2 text-sm rounded-lg flex items-center justify-center sm:justify-start gap-2 focus:outline-none"
+                onClick={handleAddMaterial}
+                className="bg-[#3C50E0] hover:bg-blue-700 text-white px-3 py-2 text-sm rounded-lg flex items-center justify-center sm:justify-start gap-2"
               >
                 <Plus size={16} />
-                <span>Add Unit</span>
+                <span>Add Material</span>
               </button>
             </div>
             <hr />
@@ -398,9 +425,7 @@ const UnitPage = () => {
                   columns={getColumns()} 
                   pagination
                   paginationModel={paginationModel}
-                  onPaginationModelChange={(model) => {
-                    setPaginationModel(model);
-                  }}
+                  onPaginationModelChange={setPaginationModel}
                   pageSizeOptions={[5]}
                   disableRowSelectionOnClick
                   autoHeight
@@ -411,6 +436,10 @@ const UnitPage = () => {
                     },
                     '& .MuiDataGrid-row:hover': {
                       backgroundColor: '#f8fafc',
+                    },
+                    '& .name-column-header .MuiDataGrid-columnHeaderTitleContainer': {
+                      paddingLeft: '15px',
+                      fontWeight: '600',
                     },
                     // Responsive font sizes
                     fontSize: isMobile ? '0.8rem' : '0.875rem',
@@ -440,4 +469,4 @@ const UnitPage = () => {
   );
 };
 
-export default UnitPage;
+export default MaterialPage;
