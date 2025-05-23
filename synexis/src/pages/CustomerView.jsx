@@ -10,7 +10,6 @@ import { useState, useEffect, useRef } from 'react';
 import { Menu, Search, FileText, Download, Eye } from 'lucide-react';
 import { FaEdit } from "react-icons/fa";
 import { MdDelete, MdOutlineClose } from "react-icons/md";
-import { createTheme } from '@mui/material/styles';
 import { useLocation, useParams, useNavigate } from 'react-router-dom';
 import { customerService } from '../services/customerService';
 import { ToastContainer } from 'react-toastify';
@@ -181,7 +180,7 @@ const CustomerView = () => {
   };
 
   const handleEditToCustomer = () => {
-    navigate(`/editCustomer/${selectedCustomerId}`);
+    navigate(`/editcustomer/${selectedCustomerId}`);
   };
 
   const handleDeleteCustomer = async () => {

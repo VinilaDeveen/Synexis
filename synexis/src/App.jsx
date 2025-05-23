@@ -18,6 +18,7 @@ import AddEmployeePage from "./pages/AddEmployee";
 import EmployeeView from "./pages/EmployeeView";
 import CustomerPage from "./pages/Customer";
 import CustomerView from "./pages/CustomerView";
+import AddCustomerPage from "./pages/AddCustomer";
 
 function App() {
 
@@ -52,6 +53,8 @@ function App() {
           <Route path="/employeeView/:id" element={<EmployeeView />} />
 
           <Route path="/customer" element={<CustomerPage />} />
+          <Route path="/addcustomer" element={<AddCustomerPage />} />
+          <Route path="/editcustomer/:id" element={<AddCustomerPage />} />
           <Route path="/customerView/:id" element={<CustomerView />} />
         </Routes>
       </NotificationProvider>
