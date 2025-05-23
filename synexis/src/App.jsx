@@ -8,6 +8,7 @@ import BrandPage from "./pages/Brand";
 import AddBrandPage from "./pages/AddBrand";
 import BrandView from "./pages/BrandView";
 import UnitPage from "./pages/Unit";
+import AddUnitPage from "./pages/AddUnit";
 
 function App() {
 
@@ -27,6 +28,8 @@ function App() {
           <Route path="/brandView/:id" element={<BrandView />} />
 
           <Route path="/unit" element={<UnitPage />} />
+          <Route path="/addunit" element={<AddUnitPage />} />
+          <Route path="/editunit/:id" element={<AddUnitPage />} />
         </Routes>
       </NotificationProvider>
     </Router>

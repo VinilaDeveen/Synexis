@@ -168,12 +168,12 @@ const UnitPage = () => {
     console.log("Add unit clicked");
     notifySuccess('Add unit dialog opened');
     // Navigate to add unit page
-    navigate('/addUnit');
+    navigate('/addunit');
   };
 
   const handleEditUnit = (id) => {
     console.log(`Edit unit ${id} clicked`);
-    navigate(`/editUnit/${id}`);
+    navigate(`/editunit/${id}`);
   };
 
   const handleViewUnit = (id) => {
