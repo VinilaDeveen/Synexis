@@ -9,5 +9,5 @@ export const customerService = {
   create: (employee) => axios.post(`${API_BASE_URL}`, employee),
   update: (id, employee) => axios.put(`${API_BASE_URL}/${id}`, employee),
   delete: (id) => axios.delete(`${API_BASE_URL}/${id}`),
-  getEmployeeActivityLogs: (id) => axios.get(`http://localhost:8080/api/synexis/activityLog/Customer/${id}`)
+  getCustomerActivityLogs: (id) => axios.get(`http://localhost:8080/api/synexis/activityLog/Customer/${id}`)
 };
