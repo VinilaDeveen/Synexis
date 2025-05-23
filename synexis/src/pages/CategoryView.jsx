@@ -19,6 +19,8 @@ import { useNotification } from '../hooks/useNotification';
 
 const CategoryView = () => {
   const { notifySuccess, notifyError, notifyWarning, notifyDefault } = useNotification();
+  const [activityLogs, setActivityLogs] = useState([]);
+  const [activityLogLoading, setActivityLogLoading] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [showSidebar, setShowSidebar] = useState(true);
   const [isMobile, setIsMobile] = useState(false);
@@ -75,6 +77,32 @@ const CategoryView = () => {
       },
     },
   });
+
+  // Add this useEffect to fetch activity logs
+  useEffect(() => {
+    const fetchActivityLogs = async () => {
+      if (!selectedCategoryId) return;
+      
+      try {
+        setActivityLogLoading(true);
+        const response = await categoryService.getCategoryActivityLogs(selectedCategoryId);
+        
+        if (response && response.data) {
+          setActivityLogs(response.data);
+        }
+      } catch (error) {
+        console.error('Error fetching activity logs:', error);
+        notifyError('Failed to load activity logs');
+      } finally {
+        setActivityLogLoading(false);
+      }
+    };
+    
+    // Only fetch logs when activity tab is active and we have a unit selected
+    if (activeTab === 'activity' && selectedCategoryId) {
+      fetchActivityLogs();
+    }
+  }, [selectedCategoryId, activeTab]);
   
   // Fetch categories list data
   useEffect(() => {
@@ -454,16 +482,16 @@ const CategoryView = () => {
                             <div className="space-y-3">
                               {isSubcategory(selectedCategory) ? (
                                 <div className="flex">
-                                  <span className="w-32 text-gray-400">Sub Category</span>
-                                  <span className="bg-[#A0B2F9] text-black text-xs px-2 py-1 rounded-md">
+                                  <span className="w-32 text-gray-400">Parent Category</span>
+                                  <span className="bg-[#3119C3] text-black text-xs px-2 py-1 rounded-md">
                                     {selectedCategory.categoryName}
                                   </span>
                                   
                                 </div>
                               ) : (
                                 <div className="flex">
-                                  <span className="w-32 text-gray-400">Parent Category</span>
-                                  <span className="bg-[#3119C3] text-white text-xs px-2 py-1 rounded-md">
+                                  <span className="w-32 text-gray-400">Sub Category</span>
+                                  <span className="bg-[#A0B2F9] text-black text-xs px-2 py-1 rounded-md">
                                     {selectedCategory.categoryName}
                                   </span>
                                 </div>
@@ -517,18 +545,32 @@ const CategoryView = () => {
                           )}
                         </div>
                       ) : (
-                        <div>
+                        <div className="max-h-[calc(100vh-260px)] overflow-y-auto" style={{
+                          scrollbarWidth: 'thin',
+                          scrollbarColor: '#3B50DF #D9D9D9'
+                        }}>
                           <h2 className="text-lg font-semibold mb-4">Activity Log</h2>
-                          <div className="space-y-4">
-                            <div className="border-l-2 border-blue-500 pl-4 py-2">
-                              <p className="text-sm text-gray-500">10 April 2025 09:23</p>
-                              <p>Category created by Steve Johns</p>
+                          {activityLogLoading ? (
+                            <div className="flex justify-center items-center h-32">
+                              <InlineLoader />
                             </div>
-                            <div className="border-l-2 border-blue-500 pl-4 py-2">
-                              <p className="text-sm text-gray-500">10 April 2025 09:25</p>
-                              <p>Materials added by Steve Johns</p>
+                          ) : (
+                            <div className="space-y-4">
+                              {activityLogs && activityLogs.length > 0 ? (
+                                activityLogs.map((activity, index) => (
+                                  <div key={`activity-${index}`} className="border-l-2 border-blue-500 pl-4 py-2">
+                                    <p className="text-sm text-gray-500">{activity.actLogTimestamp}</p>
+                                    <p>{activity.actLogAction} {activity.actLogPerformedBy}</p>
+                                    {activity.actLogDetails && <p className="text-sm text-gray-600">{activity.actLogDetails}</p>}
+                                  </div>
+                                ))
+                              ) : (
+                                <div className="border-l-2 border-blue-500 pl-4 py-2">
+                                  <p className="text-sm text-gray-500">No activity records found</p>
+                                </div>
+                              )}
                             </div>
-                          </div>
+                          )}
                         </div>
                       )}
                     </div>

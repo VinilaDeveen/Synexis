@@ -52,11 +52,11 @@ const RecentActivitiesPanel = ({ isVisible, activities, onClose }) => {
                 <tr key={index} className="border-b border-gray-200">
                   <td className="py-3">
                     <div className="flex text-sm">
-                      <div className="w-[110px]">{activity.item}</div>
-                      <div className="w-[90px]">{activity.action} -</div>
-                      <div className="w-[100px]">{activity.user}</div>
+                      <div className="w-[110px]">{activity.entityName}</div>
+                      <div className="w-[90px]">{activity.actLogAction} -</div>
+                      <div className="w-[100px]">{activity.actLogPerformedBy}</div>
                     </div>
-                    <div className="text-gray-500 text-xs mt-1">{activity.date}</div>
+                    <div className="text-gray-500 text-xs mt-1">{activity.actLogTimestamp}</div>
                   </td>
                 </tr>
               ))}

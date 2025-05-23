@@ -5,8 +5,7 @@ import {
   FullPageLoader, 
   InlineLoader, 
   ButtonLoader,
-  ContentLoader, 
-  ImageLoader
+  ContentLoader 
 } from '../components/loaders';
 import { useState, useEffect, useRef } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
@@ -18,12 +17,12 @@ import { DataGrid } from '@mui/x-data-grid';
 import { createTheme, ThemeProvider } from '@mui/material/styles';
 import { ToastContainer } from 'react-toastify';
 import { useNotification } from '../hooks/useNotification';
-import { brandService } from '../services/brandService';
+import { unitService } from '../services/unitService';
 import { recentActivityService } from '../services/recentActivityService';
 
-const BrandPage = () => {
+const UnitPage = () => {
   const { notifySuccess, notifyError, notifyWarning, notifyDefault } = useNotification();
-  const [brands, setBrands] = useState([]);
+  const [units, setUnits] = useState([]);
   const navigate = useNavigate();
   
   // State for recent activities panel and sidebar visibility
@@ -37,34 +36,33 @@ const BrandPage = () => {
     pageSize: 5,
     page: 0,
   });
-
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(true); // Start with loading true
   const isInitialLoad = useRef(true);
 
   // Fetch recent activities from API
-    useEffect(() => {
-      const fetchActivities = async () => {
-        try {
-          setLoading(true);
-          const response = await recentActivityService.getAllBrandActivity();
-          if (response && response.data) {
-            setRecentActivities(response.data);
-          }
-        } catch (error) {
-          if (isInitialLoad.current){
-            console.error('Error fetching categories:', error);
-            notifyError(`Failed to load recent activities: ${error.message || 'Unknown error'}`);
-            isInitialLoad.current = false;
-          }
-        } finally {
-          setLoading(false);
+  useEffect(() => {
+    const fetchActivities = async () => {
+      try {
+        setLoading(true);
+        const response = await recentActivityService.getAllUnitActivity();
+        if (response && response.data) {
+          setRecentActivities(response.data);
         }
-      };
-  
-      // Fetch the categories
-      fetchActivities();
-    }, []);
+      } catch (error) {
+        if (isInitialLoad.current){
+          console.error('Error fetching categories:', error);
+          notifyError(`Failed to load recent activities: ${error.message || 'Unknown error'}`);
+          isInitialLoad.current = false;
+        }
+      } finally {
+        setLoading(false);
+      }
+    };
 
+    // Fetch the categories
+    fetchActivities();
+  }, []);
+  
   // Check screen size and set mobile state
   useEffect(() => {
     const handleResize = () => {
@@ -85,98 +83,49 @@ const BrandPage = () => {
     // Cleanup
     return () => window.removeEventListener('resize', handleResize);
   }, []);
-
-
-  // Fetch brands from API
-    useEffect(() => {
-      const fetchBrands = async () => {
-        try {
-          setLoading(true);
-          const response = await brandService.getAll();
-          if (response && response.data) {
-            setBrands(response.data);
-          }
-        } catch (error) {
-          if (isInitialLoad.current){
-            console.error('Error fetching brands:', error);
-            notifyError(`Failed to load brands: ${error.message || 'Unknown error'}`);
-            isInitialLoad.current = false;
-          }
-        } finally {
-          setLoading(false);
-        }
-      };
   
-      // Fetch the categories
-      fetchBrands();
-    }, []);
+  // Fetch units from API
+  useEffect(() => {
+    const fetchUnits = async () => {
+      try {
+        setLoading(true);
+        const response = await unitService.getAll();
+        if (response && response.data) {
+          setUnits(response.data);
+        }
+      } catch (error) {
+        if (isInitialLoad.current) {
+          console.error('Error fetching units:', error);
+          notifyError(`Failed to load units: ${error.message || 'Unknown error'}`);
+          isInitialLoad.current = false;
+        }
+      } finally {
+        setLoading(false);
+      }
+    };
 
-    // We need to check loading state before returning the full component
-    if (loading) {
-      return <FullPageLoader />;
-    }
+    // Fetch the units
+    fetchUnits();
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // We need to check loading state before returning the full component
+  if (loading) {
+    return <FullPageLoader />;
+  }
 
   // Toggle sidebar
   const toggleSidebar = () => {
     setShowSidebar(!showSidebar);
   };
-
+  
   // Toggle recent activities panel
   const toggleActivitiesPanel = () => {
     setShowActivities(!showActivities);
   };
-
+  
+  // Close recent activities panel
   const closeActivitiesPanel = () => {
     setShowActivities(false);
-  };
-  
-  // Responsive columns setup
-  const getColumns = () => {
-    // Base columns that always show
-    const baseColumns = [
-      { 
-        field: 'name', 
-        headerName: 'Name', 
-        flex: 1,
-        minWidth: 180,
-        renderCell: renderNameCell,
-        headerAlign: 'left',
-        align: 'left',
-        headerClassName: 'name-column-header',
-      },
-      { 
-        field: 'actions', 
-        headerName: 'Actions', 
-        width: 150, 
-        renderCell: renderActionsCell,
-        sortable: false,
-        filterable: false,
-        headerAlign: 'left',
-        align: 'left'
-      },
-    ];
-    
-    // Additional columns for larger screens
-    const additionalColumns = [
-      { 
-        field: 'country', 
-        headerName: 'Country', 
-        width: 150,
-        flex: 0.7,
-        headerAlign: 'left',
-        align: 'left'
-      },
-      { 
-        field: 'description', 
-        headerName: 'Description', 
-        flex: 1,
-        minWidth: 200,
-        headerAlign: 'left',
-        align: 'left'
-      },
-    ];
-    
-    return isMobile ? baseColumns : [...baseColumns.slice(0, 1), ...additionalColumns, baseColumns[1]];
   };
   
   // Custom theme for DataGrid
@@ -193,7 +142,7 @@ const BrandPage = () => {
             },
             '& .MuiDataGrid-cell': {
               borderBottom: '1px solid #f1f5f9',
-              paddingLeft: '8px 16px',
+              padding: '8px 16px',
             },
             '& .MuiDataGrid-columnSeparator': {
               display: 'none',
@@ -215,111 +164,170 @@ const BrandPage = () => {
     setSearchTerm(e.target.value);
   };
   
-  const handleAddBrand = () => {
-    navigate('/addBrand');
+  const handleAddUnit = () => {
+    console.log("Add unit clicked");
+    notifySuccess('Add unit dialog opened');
+    // Navigate to add unit page
+    navigate('/addunit');
   };
 
-  const handleEditBrand = (id) => {
-    navigate(`/editBrand/${id}`);
+  const handleEditUnit = (id) => {
+    console.log(`Edit unit ${id} clicked`);
+    navigate(`/editunit/${id}`);
   };
 
-  const handleDeleteBrand = (id) => {
-      try {
-        // Find the category being deleted
-        const brandToDelete = brands.find(brand => brand.brandId === id);
-        const brandName = brandToDelete.brandName;
-        
-        // Simulate API call for deletion
-        brandService.delete(id);
-        notifySuccess(`Brand "${brandName}" successfully deleted`);
-      } catch (error) {
-        notifyError(`Error deleting brand: ${error.message || 'Unknown error'}`);
+  const handleViewUnit = (id) => {
+    console.log(`View unit ${id} clicked`);
+    navigate(`/unitView/${id}`, { state: { selectedUnitId: id } });
+  };
+
+  const handleDeleteUnit = async (id) => {
+    try {
+      // Find the unit being deleted
+      const unitToDelete = units.find(unit => unit.unitId === id);
+      const unitName = unitToDelete ? unitToDelete.unitName : 'Unknown';
+      
+      // Call API service for deletion
+      const response = await unitService.delete(id);
+      
+      if (response && response.success) {
+        notifySuccess(`Unit "${unitName}" successfully deleted`);
+        // Update local state to reflect the deletion
+        setUnits(units.filter(unit => unit.unitId !== id));
+      } else {
+        notifyError('Failed to delete unit');
       }
-    };
+    } catch (error) {
+      notifyError(`Error deleting unit: ${error.message || 'Unknown error'}`);
+    }
+  };
   
-  // Custom render components for DataGrid
+  // Render status indicator for unit name cell
   const renderNameCell = (params) => {
-    const brand = params.value;
-    const isActive = brand.brandStatus === 'ACTIVE';
-    const displayName = brand.brandName;
-
+    const isActive = params.row.status === 'ACTIVE';
+    
     return (
       <div className="flex items-center">
         <div className={`w-2 h-2 rounded-full mr-2 ${isActive ? 'bg-green-500' : 'bg-red-500'}`}></div>
         <div>
-          {/* Fixed image loading logic here */}
-          {loading ? (
-            <ImageLoader />
-          ) : (
-            <img
-              alt={`${brand.name} logo`}
-              src={`http://localhost:8080/api/synexis/brand/image/${brand.brandId}?t=${new Date().getTime()}`}
-              className="size-10 border-2 border-slate-300"
-            />
-          )}
-        </div>
-        <div className="hidden sm:block">
-          <span className="text-black px-2 py-1 rounded-md mr-2">{displayName}</span>
-        </div>
-        <div className="block sm:hidden">
-          <span className="text-black px-2 py-1 rounded-md mr-2 text-sm">{brand.name}</span>
+          {params.value}
         </div>
       </div>
     );
   };
   
+  // Render actions cell
   const renderActionsCell = (params) => {
     return (
-      <div className="flex gap-2 md:gap-6 mt-4">
+      <div className="flex gap-2 md:gap-4 mt-2">
         <div 
           className="text-[#3B50DF] hover:text-blue-900 cursor-pointer"
-          onClick={() => handleEditBrand(params.id)}
-          title="Edit Brand"
+          onClick={() => handleEditUnit(params.id)}
+          title="Edit Unit"
         >
           <FaEdit size={isMobile ? 16 : 18} />
         </div>
         <div 
           className="text-[#3B50DF] hover:text-red-500 cursor-pointer"
-          onClick={() => handleDeleteBrand(params.id)}
-          title="Delete Brand"
+          onClick={() => handleDeleteUnit(params.id)}
+          title="Delete Unit"
         >
           <MdDelete size={isMobile ? 16 : 18} />
         </div>
-        <Link 
-          to={`/brandView/${params.id}`} 
-          state={{ selectedBrandId: params.id }}
+        <div 
+          className="text-[#3B50DF] hover:text-green-500 cursor-pointer"
+          title="View Unit Details"
+          onClick={() => handleViewUnit(params.id)}
         >
-          <div 
-            className="text-[#3B50DF] hover:text-green-500 cursor-pointer"
-            title="View Brand Details"
-          >
-            <FaEye size={isMobile ? 16 : 18} />
-          </div>
-        </Link>
+          <FaEye size={isMobile ? 16 : 18} />
+        </div>
       </div>
     );
   };
-
-  // Filter brands based on search term
-  const filteredBrands = searchTerm.trim() === '' 
-    ? brands 
-    : brands.filter(brand => 
-        brand.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        brand.country.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        brand.description.toLowerCase().includes(searchTerm.toLowerCase())
+  
+  // Render boolean values as Yes/No
+  const renderBooleanCell = (params) => {
+    return params.value ? 'Yes' : 'No';
+  };
+  
+  // Responsive columns setup
+  const getColumns = () => {
+    // Base columns for all screen sizes
+    const baseColumns = [
+      { 
+        field: 'unitName', 
+        headerName: 'Unit Name', 
+        flex: 1,
+        minWidth: 150,
+        renderCell: renderNameCell,
+      },
+      { 
+        field: 'shortName', 
+        headerName: 'Short Name', 
+        flex: 1,
+        minWidth: 120,
+      },
+      { 
+        field: 'allowDecimal', 
+        headerName: 'Allow Decimal', 
+        flex: 1,
+        minWidth: 120,
+        renderCell: renderBooleanCell,
+      },
+    ];
+    
+    // Additional columns for larger screens
+    const additionalColumns = [
+      { 
+        field: 'materials', 
+        headerName: 'Materials', 
+        flex: 0.5,
+        minWidth: 100,
+        align: 'center',
+        headerAlign: 'center',
+      }
+    ];
+    
+    // Actions column
+    const actionsColumn = [
+      { 
+        field: 'actions', 
+        headerName: 'Actions', 
+        width: 140, 
+        renderCell: renderActionsCell,
+        sortable: false,
+        filterable: false,
+      }
+    ];
+    
+    // Return different columns based on screen size
+    return isMobile 
+      ? [...baseColumns, ...actionsColumn] 
+      : [...baseColumns, ...additionalColumns, ...actionsColumn];
+  };
+  
+  // Filter units based on search term
+  const filteredUnits = searchTerm.trim() === '' 
+    ? units 
+    : units.filter(unit => 
+        (unit.unitName && unit.unitName.toLowerCase().includes(searchTerm.toLowerCase())) ||
+        (unit.unitShortName && unit.unitShortName.toLowerCase().includes(searchTerm.toLowerCase()))
       );
-
-  // Prepare data for DataGrid - CHANGED HERE: Now using filteredBrands instead of brands
-  const rows = filteredBrands.map(brand => ({
-    id: brand.brandId,
-    name: brand,
-    description: brand.brandDescription,
-    country: brand.brandCountry,
-    actions: brand.brandId
+  
+  // Prepare data for DataGrid
+  const rows = filteredUnits.map(unit => ({
+    id: unit.unitId,
+    unitName: unit.unitName,
+    shortName: unit.unitShortName,
+    allowDecimal: unit.unitAllowDecimal,
+    status: unit.unitStatus,
+    materials: unit.materialCount,
+    actions: unit.unitId
   }));
 
   return (
     <div className="flex w-screen h-screen text-black bg-gray-100 overflow-hidden">
+      
       {/* Mobile Menu Button */}
       {isMobile && !showSidebar && (
         <button 
@@ -348,17 +356,17 @@ const BrandPage = () => {
         <div className="p-2 sm:p-4 md:p-6 flex-1 overflow-auto">
           {/* Toast notifications */}
           <ToastContainer className="mt-[70px]" />
+          <h1 className="text-xl md:text-2xl font-semibold mb-2 md:mb-4 pl-2">Unit of Measurement</h1>
 
-          <h1 className="text-xl md:text-2xl font-semibold mb-2 md:mb-4 pl-2">Brands</h1>
-
-          {/* Category Table Card */}
+          {/* Unit Table Card */}
           <div className="bg-white rounded-lg shadow">
-            {/* Search and Add Category */}
+            {/* Search and Add Unit */}
             <div className="p-3 md:p-4 flex flex-col sm:flex-row sm:justify-between gap-3 sm:gap-0">
               <div className="flex items-center w-full sm:w-auto">
                 <div 
                   onClick={toggleActivitiesPanel}
                   className="cursor-pointer relative"
+                  title="Recent Activities"
                 >
                   <LuHistory size={20} className="text-[#3B50DF]" />
                 </div>
@@ -376,11 +384,11 @@ const BrandPage = () => {
                 </div>
               </div>
               <button 
-                onClick={handleAddBrand}
-                className="bg-[#3C50E0] hover:bg-blue-700 text-white px-3 py-2 text-sm rounded-lg flex items-center justify-center sm:justify-start gap-2"
+                onClick={handleAddUnit}
+                className="bg-[#3C50E0] hover:bg-blue-700 text-white px-3 py-2 text-sm rounded-lg flex items-center justify-center sm:justify-start gap-2 focus:outline-none"
               >
                 <Plus size={16} />
-                <span>Add Brand</span>
+                <span>Add Unit</span>
               </button>
             </div>
             <hr />
@@ -393,7 +401,9 @@ const BrandPage = () => {
                   columns={getColumns()} 
                   pagination
                   paginationModel={paginationModel}
-                  onPaginationModelChange={setPaginationModel}
+                  onPaginationModelChange={(model) => {
+                    setPaginationModel(model);
+                  }}
                   pageSizeOptions={[5]}
                   disableRowSelectionOnClick
                   autoHeight
@@ -405,16 +415,8 @@ const BrandPage = () => {
                     '& .MuiDataGrid-row:hover': {
                       backgroundColor: '#f8fafc',
                     },
-                    '& .name-column-header .MuiDataGrid-columnHeaderTitleContainer': {
-                      paddingLeft: '15px',
-                      fontWeight: '600',
-                    },
                     // Responsive font sizes
                     fontSize: isMobile ? '0.8rem' : '0.875rem',
-                    // Adjust cell padding for mobile
-                    '& .MuiDataGrid-cell': {
-                      //padding: isMobile ? '2px 4px' : '16px 16px',
-                    }
                   }}
                 />
               </ThemeProvider>
@@ -424,13 +426,11 @@ const BrandPage = () => {
       </div>
 
       {/* Recent Activities Panel */}
-
       <RecentActivities
         isVisible={showActivities} 
         activities={recentActivities}
         onClose={closeActivitiesPanel}
       />
-
       
       {/* Overlay when mobile sidebar is open */}
       {isMobile && showSidebar && (
@@ -443,4 +443,4 @@ const BrandPage = () => {
   );
 };
 
-export default BrandPage;
+export default UnitPage;

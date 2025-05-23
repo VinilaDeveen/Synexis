@@ -18,6 +18,7 @@ import { createTheme, ThemeProvider } from '@mui/material/styles';
 import { ToastContainer } from 'react-toastify';
 import { useNotification } from '../hooks/useNotification';
 import { categoryService } from '../services/categoryService';
+import { recentActivityService } from '../services/recentActivityService';
 
 const CategoryPage = () => {
   const { notifySuccess, notifyError, notifyWarning, notifyDefault } = useNotification();
@@ -25,6 +26,7 @@ const CategoryPage = () => {
   const navigate = useNavigate();
   
   // State for recent activities panel and sidebar visibility
+  const [recentActivities, setRecentActivities] = useState('');
   const [showActivities, setShowActivities] = useState(false);
   const [showSidebar, setShowSidebar] = useState(true);
   const [isMobile, setIsMobile] = useState(false);
@@ -36,6 +38,30 @@ const CategoryPage = () => {
   });
   const [loading, setLoading] = useState(true); // Start with loading true
   const isInitialLoad = useRef(true);
+
+  // Fetch recent activities from API
+    useEffect(() => {
+      const fetchActivities = async () => {
+        try {
+          setLoading(true);
+          const response = await recentActivityService.getAllCategoryActivity();
+          if (response && response.data) {
+            setRecentActivities(response.data);
+          }
+        } catch (error) {
+          if (isInitialLoad.current){
+            console.error('Error fetching categories:', error);
+            notifyError(`Failed to load recent activities: ${error.message || 'Unknown error'}`);
+            isInitialLoad.current = false;
+          }
+        } finally {
+          setLoading(false);
+        }
+      };
+  
+      // Fetch the categories
+      fetchActivities();
+    }, []);
   
   // Check screen size and set mobile state - moved up to run first
   useEffect(() => {
@@ -90,14 +116,7 @@ const CategoryPage = () => {
   // Toggle sidebar
   const toggleSidebar = () => {
     setShowSidebar(!showSidebar);
-    notifyDefault(showSidebar ? "Sidebar hidden" : "Sidebar visible");
   };
-  
-  // Recent activities data
-  const recentActivities = [
-    { item: "Iron Sheet", action: "created by", user: "Steve Johns", date: "10 April 2025 09:23" },
-    { item: "Sheet", action: "created by", user: "Steve Johns", date: "10 April 2025 09:23" },
-  ];
   
   // Toggle recent activities panel
   const toggleActivitiesPanel = () => {
@@ -146,7 +165,6 @@ const CategoryPage = () => {
   };
   
   const handleAddCategory = () => {
-    console.log("Add category clicked");
     notifySuccess('Add category dialog opened');
   };
 
@@ -156,7 +174,6 @@ const CategoryPage = () => {
 
   const handleDeleteCategory = (id) => {
     try {
-      console.log(`Delete category ${id} clicked`);
       // Find the category being deleted
       const categoryToDelete = categories.find(cat => cat.categoryId === id);
       const categoryName = categoryToDelete ? categoryToDelete.categoryName || categoryToDelete.mainCategoryName : 'Unknown';
@@ -285,7 +302,7 @@ const CategoryPage = () => {
   const rows = filteredCategories.map(category => ({
     id: category.categoryId,
     name: category,
-    description: category.description,
+    description: category.categoryDescription,
     status: category.categoryStatus,
     actions: category.categoryId
   }));
@@ -370,7 +387,6 @@ const CategoryPage = () => {
                   paginationModel={paginationModel}
                   onPaginationModelChange={(model) => {
                     setPaginationModel(model);
-                    notifyDefault(`Page ${model.page + 1} loaded`);
                   }}
                   pageSizeOptions={[5]}
                   disableRowSelectionOnClick
