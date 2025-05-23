@@ -15,6 +15,7 @@ import AddMaterialPage from "./pages/AddMaterial";
 import MaterialView from "./pages/MaterialView";
 import EmployeePage from "./pages/Employee";
 import AddEmployeePage from "./pages/AddEmployee";
+import EmployeeView from "./pages/EmployeeView";
 
 function App() {
 
@@ -46,6 +47,7 @@ function App() {
           <Route path="/employee" element={<EmployeePage />} />
           <Route path="/addemployee" element={<AddEmployeePage />} />
           <Route path="/editemployee/:id" element={<AddEmployeePage />} />
+          <Route path="/employeeView/:id" element={<EmployeeView />} />
         </Routes>
       </NotificationProvider>
     </Router>

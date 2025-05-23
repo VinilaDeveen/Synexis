@@ -331,13 +331,13 @@ const AddEmployeePage = () => {
                         className="w-64 bg-blue-50 border border-transparent rounded-md shadow-sm px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                       >
                         <option value="">Select Prefix</option>
-                        <option value="Mr">Mr.</option>
-                        <option value="Ms">Ms.</option>
-                        <option value="Miss">Miss.</option>
-                        <option value="Mrs">Mrs.</option> 
-                        <option value="Mx">Mx.</option> 
-                        <option value="Dr">Dr.</option>
-                        <option value="Prof">Prof.</option>             
+                        <option value="Mr.">Mr.</option>
+                        <option value="Ms.">Ms.</option>
+                        <option value="Miss.">Miss.</option>
+                        <option value="Mrs.">Mrs.</option> 
+                        <option value="Mx.">Mx.</option> 
+                        <option value="Dr.">Dr.</option>
+                        <option value="Prof.">Prof.</option>             
                       </select>
                       </div>
                     </div>
@@ -428,9 +428,9 @@ const AddEmployeePage = () => {
                           className="w-[500px] bg-blue-50 border border-transparent rounded-md shadow-sm px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                         >
                           <option value="">Select Gender</option>
-                          <option value="Male">Male</option>
-                          <option value="Female">Female</option>
-                          <option value="Other">Other</option>
+                          <option value="MALE">Male</option>
+                          <option value="FEMALE">Female</option>
+                          <option value="OTHER">Other</option>
                         </select>
                       </div>
                     </div>
