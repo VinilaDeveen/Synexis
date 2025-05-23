@@ -42,7 +42,7 @@ const AddCategoryPage = () => {
   useEffect(() => {
     const fetchParentCategories = async () => {
       try {
-        const response = await categoryService.getAllDetails();
+        const response = await categoryService.getAllParentCategories();
         setParentCategories(response.data);
       } catch (err) {
         if (isInitialLoad.current) {
@@ -67,7 +67,7 @@ const AddCategoryPage = () => {
           
           setFormData({
             name: categoryData.categoryName,
-            description: categoryData.description,
+            description: categoryData.categoryDescription,
             parentCategoryId: categoryData.parentCategoryId || null
           });
           
@@ -117,8 +117,8 @@ const AddCategoryPage = () => {
     setSubmitting(true); // Set submitting to true when the save/update button is clicked
 
     const categoryData = {
-      name: formData.name,
-      description: formData.description,
+      categoryName: formData.name,
+      categoryDescription: formData.description,
       parentCategoryId: isSubCategory ? formData.parentCategoryId : null
     };
 
@@ -266,10 +266,10 @@ const AddCategoryPage = () => {
                       >
                         <option value="">Select Parent Category</option>
                         {parentCategories
-                          .filter(category => category && category.categoryId && category.mainCategoryName) // Filter out null/undefined categories
+                          .filter(category => category && category.parentCategoryId ) // Filter out null/undefined categories
                           .map(category => (
                             <option key={category.parentCategoryId} value={category.parentCategoryId}>
-                              {category.mainCategoryName}
+                              {category.parentCategoryName}
                             </option>
                           ))
                         }

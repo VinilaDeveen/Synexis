@@ -62,7 +62,6 @@ const AddBrandPage = () => {
         try {
           const response = await brandService.getById(id);
           const brandData = response.data;
-          console.log(brandData);
           
           // Store the brandId for image display, but don't store the image as a string
           setFormData({
@@ -171,10 +170,8 @@ const AddBrandPage = () => {
       if (isEditMode) {
         // For edit mode, use the ID from URL params
         await brandService.update(id, formDataToSend);
-        console.log("update", formData);
       } else {
         await brandService.create(formDataToSend);
-        console.log("add", formData);
       }
       // Redirect to brands list page after successful operation
       navigate('/brand');

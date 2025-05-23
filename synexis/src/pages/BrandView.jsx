@@ -20,6 +20,8 @@ import { useNotification } from '../hooks/useNotification';
 
 function BrandView() {
   const { notifySuccess, notifyError, notifyWarning, notifyDefault } = useNotification();
+  const [activityLogs, setActivityLogs] = useState([]);
+  const [activityLogLoading, setActivityLogLoading] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [showSidebar, setShowSidebar] = useState(true);
   const [isMobile, setIsMobile] = useState(false);
@@ -76,6 +78,32 @@ function BrandView() {
       },
     },
   });
+
+  // Add this useEffect to fetch activity logs
+  useEffect(() => {
+    const fetchActivityLogs = async () => {
+      if (!selectedBrandId) return;
+      
+      try {
+        setActivityLogLoading(true);
+        const response = await brandService.getBrandActivityLogs(selectedBrandId);
+        
+        if (response && response.data) {
+          setActivityLogs(response.data);
+        }
+      } catch (error) {
+        console.error('Error fetching activity logs:', error);
+        notifyError('Failed to load activity logs');
+      } finally {
+        setActivityLogLoading(false);
+      }
+    };
+    
+    // Only fetch logs when activity tab is active and we have a unit selected
+    if (activeTab === 'activity' && selectedBrandId) {
+      fetchActivityLogs();
+    }
+  }, [selectedBrandId, activeTab]);
 
   // Fetch brand list data
     useEffect(() => {
@@ -517,18 +545,32 @@ function BrandView() {
                           )}
                         </div>
                       ) : (
-                        <div>
+                        <div className="max-h-[calc(100vh-260px)] overflow-y-auto" style={{
+                          scrollbarWidth: 'thin',
+                          scrollbarColor: '#3B50DF #D9D9D9'
+                        }}>
                           <h2 className="text-lg font-semibold mb-4">Activity Log</h2>
-                          <div className="space-y-4">
-                            <div className="border-l-2 border-blue-500 pl-4 py-2">
-                              <p className="text-sm text-gray-500">10 April 2025 09:23</p>
-                              <p>Category created by Steve Johns</p>
+                          {activityLogLoading ? (
+                            <div className="flex justify-center items-center h-32">
+                              <InlineLoader />
                             </div>
-                            <div className="border-l-2 border-blue-500 pl-4 py-2">
-                              <p className="text-sm text-gray-500">10 April 2025 09:25</p>
-                              <p>Materials added by Steve Johns</p>
+                          ) : (
+                            <div className="space-y-4">
+                              {activityLogs && activityLogs.length > 0 ? (
+                                activityLogs.map((activity, index) => (
+                                  <div key={`activity-${index}`} className="border-l-2 border-blue-500 pl-4 py-2">
+                                    <p className="text-sm text-gray-500">{activity.actLogTimestamp}</p>
+                                    <p>{activity.actLogAction} {activity.actLogPerformedBy}</p>
+                                    {activity.actLogDetails && <p className="text-sm text-gray-600">{activity.actLogDetails}</p>}
+                                  </div>
+                                ))
+                              ) : (
+                                <div className="border-l-2 border-blue-500 pl-4 py-2">
+                                  <p className="text-sm text-gray-500">No activity records found</p>
+                                </div>
+                              )}
                             </div>
-                          </div>
+                          )}
                         </div>
                       )}
                     </div>

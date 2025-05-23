@@ -19,6 +19,7 @@ import { createTheme, ThemeProvider } from '@mui/material/styles';
 import { ToastContainer } from 'react-toastify';
 import { useNotification } from '../hooks/useNotification';
 import { brandService } from '../services/brandService';
+import { recentActivityService } from '../services/recentActivityService';
 
 const BrandPage = () => {
   const { notifySuccess, notifyError, notifyWarning, notifyDefault } = useNotification();
@@ -26,6 +27,7 @@ const BrandPage = () => {
   const navigate = useNavigate();
   
   // State for recent activities panel and sidebar visibility
+  const [recentActivities, setRecentActivities] = useState('');
   const [showActivities, setShowActivities] = useState(false);
   const [showSidebar, setShowSidebar] = useState(true);
   const [isMobile, setIsMobile] = useState(false);
@@ -38,6 +40,30 @@ const BrandPage = () => {
 
   const [loading, setLoading] = useState(true);
   const isInitialLoad = useRef(true);
+
+  // Fetch recent activities from API
+    useEffect(() => {
+      const fetchActivities = async () => {
+        try {
+          setLoading(true);
+          const response = await recentActivityService.getAllBrandActivity();
+          if (response && response.data) {
+            setRecentActivities(response.data);
+          }
+        } catch (error) {
+          if (isInitialLoad.current){
+            console.error('Error fetching categories:', error);
+            notifyError(`Failed to load recent activities: ${error.message || 'Unknown error'}`);
+            isInitialLoad.current = false;
+          }
+        } finally {
+          setLoading(false);
+        }
+      };
+  
+      // Fetch the categories
+      fetchActivities();
+    }, []);
 
   // Check screen size and set mobile state
   useEffect(() => {
@@ -103,22 +129,6 @@ const BrandPage = () => {
   const closeActivitiesPanel = () => {
     setShowActivities(false);
   };
-
-  const recentActivities = [
-    { item: "Power Link", action: "created by", user: "Steve Johns", date: "10 April 2025 09:23" },
-    { item: "Enegix", action: "created by", user: "Steve Johns", date: "10 April 2025 09:23" },
-    { item: "Power Link", action: "created by", user: "Steve Johns", date: "10 April 2025 09:23" },
-    { item: "Enegix", action: "created by", user: "Steve Johns", date: "10 April 2025 09:23" },
-    { item: "Power Link", action: "created by", user: "Steve Johns", date: "10 April 2025 09:23" },
-    { item: "Enegix", action: "created by", user: "Steve Johns", date: "10 April 2025 09:23" },
-    { item: "Power Link", action: "created by", user: "Steve Johns", date: "10 April 2025 09:23" },
-    { item: "Enegix", action: "created by", user: "Steve Johns", date: "10 April 2025 09:23" },
-    { item: "Power Link", action: "created by", user: "Steve Johns", date: "10 April 2025 09:23" },
-    { item: "Enegix", action: "created by", user: "Steve Johns", date: "10 April 2025 09:23" },
-    { item: "Power Link", action: "created by", user: "Steve Johns", date: "10 April 2025 09:23" },
-    { item: "Enegix", action: "created by", user: "Steve Johns", date: "10 April 2025 09:23" },
-  ];
-
   
   // Responsive columns setup
   const getColumns = () => {
@@ -215,7 +225,6 @@ const BrandPage = () => {
 
   const handleDeleteBrand = (id) => {
       try {
-        console.log(`Delete brand ${id} clicked`);
         // Find the category being deleted
         const brandToDelete = brands.find(brand => brand.brandId === id);
         const brandName = brandToDelete.brandName;
@@ -227,17 +236,6 @@ const BrandPage = () => {
         notifyError(`Error deleting brand: ${error.message || 'Unknown error'}`);
       }
     };
-
-  const handleViewBrand = (id) => {
-    console.log(`View brand ${id} clicked`);
-    const brand = brands.find(brand => brand.brandId === id);
-    if (brand) {
-      const brandName = brand.brandName;
-      notifyDefault(`Viewing details for "${brandName}"`);
-    } else {
-      notifyWarning('View details functionality coming soon');
-    }
-  };
   
   // Custom render components for DataGrid
   const renderNameCell = (params) => {
@@ -294,7 +292,6 @@ const BrandPage = () => {
           <div 
             className="text-[#3B50DF] hover:text-green-500 cursor-pointer"
             title="View Brand Details"
-            onClick={() => handleViewBrand(params.id)}
           >
             <FaEye size={isMobile ? 16 : 18} />
           </div>
