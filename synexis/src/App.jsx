@@ -10,6 +10,8 @@ import BrandView from "./pages/BrandView";
 import UnitPage from "./pages/Unit";
 import AddUnitPage from "./pages/AddUnit";
 import UnitView from "./pages/UnitView";
+import MaterialPage from "./pages/Material";
+import AddMaterialPage from "./pages/AddMaterial";
 
 function App() {
 
@@ -32,6 +34,10 @@ function App() {
           <Route path="/addunit" element={<AddUnitPage />} />
           <Route path="/editunit/:id" element={<AddUnitPage />} />
           <Route path="/unitView/:id" element={<UnitView />} />
+
+          <Route path="/material" element={<MaterialPage />} />
+          <Route path="/addmaterial" element={<AddMaterialPage />} />
+          <Route path="/editmaterial/:id" element={<AddMaterialPage />} />
         </Routes>
       </NotificationProvider>
     </Router>
