@@ -138,7 +138,7 @@ const EmployeePage = () => {
         field: 'name', 
         headerName: 'Name', 
         flex: 0,
-        width: 220,
+        width: 250,
         renderCell: renderNameCell,
         headerAlign: 'left',
         align: 'left',
@@ -161,7 +161,7 @@ const EmployeePage = () => {
       { 
         field: 'role', 
         headerName: 'Role', 
-        width: 120,
+        width: 280,
         headerAlign: 'left',
         align: 'left'
       },
