@@ -92,7 +92,6 @@ const InquiryPage = () => {
         const response = await inquiryService.getAll();
         if (response && response.data) {
            setInquiries(response.data);
-           console.log(response.data);
            setLoading(false);
         }
       } catch (error) {
@@ -164,21 +163,14 @@ const InquiryPage = () => {
   const handleSearchChange = (e) => {
     setSearchTerm(e.target.value);
   };
-  
-  const handleAddInquiry = () => {
-    console.log("Add inquiry clicked");
-    notifySuccess('Add inquiry dialog opened');
-  };
 
   const handleEditInquiry = (id) => {
-    navigate(`/editInquiry/${id}`);
-    console.log(`Edit inquiry ${id} clicked`);
+    navigate(`/editinquiry/${id}`);
     notifyDefault(`Editing inquiry #${id}`);
   };
 
   const handleDeleteInquiry = (id) => {
     try {
-      console.log(`Delete inquiry ${id} clicked`);
       // Find the inquiry being deleted
       const inquiryToDelete = inquiries.find(inq => inq.inquiryId === id);
       const inquiryNumber = inquiryToDelete ? inquiryToDelete.quotationNumber : 'Unknown';
@@ -196,12 +188,10 @@ const InquiryPage = () => {
   };
   
   const handleViewInquiry = (id) => {
-    console.log(`View inquiry ${id} clicked`);
     notifyDefault(`Viewing inquiry #${id}`);
   };
 
   const handleCostEstimation = (id) => {
-    console.log(`Cost estimation for inquiry ${id} clicked`);
     navigate(`/costEstimation/${id}`);
     notifyDefault(`Preparing cost estimation for inquiry #${id}`);
   };
@@ -409,7 +399,6 @@ const InquiryPage = () => {
               </div>
               <Link to="/addInquiry">
                 <button 
-                  onClick={handleAddInquiry}
                   className="bg-[#3C50E0] hover:bg-blue-700 text-white px-3 py-2 text-sm rounded-lg flex items-center justify-center sm:justify-start gap-2 focus:outline-none"
                 >
                   <Plus size={16} />

@@ -20,6 +20,7 @@ import CustomerPage from "./pages/Customer";
 import CustomerView from "./pages/CustomerView";
 import AddCustomerPage from "./pages/AddCustomer";
 import InquiryPage from "./pages/Inquiry";
+import InquiryViewPage from "./pages/InquiryView";
 
 function App() {
 
@@ -59,6 +60,7 @@ function App() {
           <Route path="/customerView/:id" element={<CustomerView />} />
 
           <Route path="/inquiry" element={<InquiryPage />} />
+          <Route path="/inquiryView/:id" element={<InquiryViewPage />} />
         </Routes>
       </NotificationProvider>
     </Router>
