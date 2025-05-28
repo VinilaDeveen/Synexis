@@ -8,21 +8,28 @@ import {
   ContentLoader 
 } from '../components/loaders';
 import { useState, useEffect, useRef } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
-import { FaEdit, FaEye } from "react-icons/fa";
-import { MdDelete } from "react-icons/md";
+import { useParams, useNavigate } from 'react-router-dom';
+import { FaEdit, FaEye, FaFilePdf } from "react-icons/fa";
+import { BiSolidDuplicate } from "react-icons/bi";
 import { LuHistory } from "react-icons/lu";
-import { Search, Plus, Menu } from 'lucide-react';
+import { Search, Plus, Menu, ArrowLeft, File } from 'lucide-react';
 import { DataGrid } from '@mui/x-data-grid';
 import { createTheme, ThemeProvider } from '@mui/material/styles';
 import { ToastContainer } from 'react-toastify';
 import { useNotification } from '../hooks/useNotification';
-import { inquiryService } from '../services/inquiryService';
+import { costEstimationService } from '../services/costEstimationService';
 import { recentActivityService } from '../services/recentActivityService';
 
-const InquiryPage = () => {
+const CostEstimationPage = () => {
   const { notifySuccess, notifyError, notifyWarning, notifyDefault } = useNotification();
-  const [inquiries, setInquiries] = useState([]);
+  const [costEstimations, setCostEstimations] = useState({
+    inquiryId: null,
+    quotationNumber: '',
+    estimations: []
+  });
+
+  const [quotationDetails, setQuotationDetails] = useState(null);
+  const { inquiryId } = useParams();
   const navigate = useNavigate();
   
   // State for recent activities panel and sidebar visibility
@@ -36,7 +43,7 @@ const InquiryPage = () => {
     pageSize: 5,
     page: 0,
   });
-  const [loading, setLoading] = useState(true); // Start with loading true
+  const [loading, setLoading] = useState(true);
   const isInitialLoad = useRef(true);
 
   // Fetch recent activities from API
@@ -44,13 +51,13 @@ const InquiryPage = () => {
       const fetchActivities = async () => {
         try {
           setLoading(true);
-          const response = await recentActivityService.getAllInquiryActivity();
+          const response = await recentActivityService.getAllCostEstimationActivity();
           if (response && response.data) {
             setRecentActivities(response.data);
           }
         } catch (error) {
           if (isInitialLoad.current){
-            console.error('Error fetching activities:', error);
+            console.error('Error fetching categories:', error);
             notifyError(`Failed to load recent activities: ${error.message || 'Unknown error'}`);
             isInitialLoad.current = false;
           }
@@ -58,8 +65,8 @@ const InquiryPage = () => {
           setLoading(false);
         }
       };
-  
-      // Fetch the activities
+    
+      // Fetch the categories
       fetchActivities();
     }, []);
   
@@ -84,30 +91,38 @@ const InquiryPage = () => {
     return () => window.removeEventListener('resize', handleResize);
   }, []);
   
-  // Fetch inquiries from API
+  // Fetch cost estimations for this inquiry from API
   useEffect(() => {
-    const fetchInquiries = async () => {
+    const fetchCostEstimations = async () => {
       try {
         setLoading(true);
-        const response = await inquiryService.getAll();
-        if (response && response.data) {
-           setInquiries(response.data);
-           setLoading(false);
+        
+        // In a real implementation, this would be:
+        /*const quotationResponse = await costEstimationService.getQuotationDetails(inquiryId);
+        if (quotationResponse && quotationResponse.data) {
+          setQuotationDetails(quotationResponse.data);
+        }*/
+        
+        const costEstimationsResponse = await costEstimationService.getAllByInquiryId(inquiryId);
+        if (costEstimationsResponse && costEstimationsResponse.data) {
+         setCostEstimations(costEstimationsResponse.data);
         }
+        setLoading(false);
       } catch (error) {
         if (isInitialLoad.current) {
-          console.error('Error fetching inquiries:', error);
-          notifyError(`Failed to load inquiries: ${error.message || 'Unknown error'}`);
+          console.error('Error fetching cost estimations:', error);
+          notifyError(`Failed to load cost estimations: ${error.message || 'Unknown error'}`);
           isInitialLoad.current = false;
         }
         setLoading(false);
       }
     };
 
-    // Fetch the inquiries
-    fetchInquiries();
-  }, []); 
- 
+    // Fetch the cost estimations
+    fetchCostEstimations();
+  }, [inquiryId]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // We need to check loading state before returning the full component
   if (loading) {
     return <FullPageLoader />;
   }
@@ -115,7 +130,6 @@ const InquiryPage = () => {
   // Toggle sidebar
   const toggleSidebar = () => {
     setShowSidebar(!showSidebar);
-    notifyDefault(showSidebar ? "Sidebar hidden" : "Sidebar visible");
   };
   
   // Toggle recent activities panel
@@ -164,58 +178,72 @@ const InquiryPage = () => {
     setSearchTerm(e.target.value);
   };
 
-  const handleEditInquiry = (id) => {
-    navigate(`/editinquiry/${id}`);
-    notifyDefault(`Editing inquiry #${id}`);
+ //complete handleAddVersion logic edit view
+
+  const handleAddVersion = () => {
+    console.log("Add version clicked");
+    navigate(`/createCostEstimation/${inquiryId}`);
+    notifySuccess('Creating new cost estimation version');
   };
 
-  const handleDeleteInquiry = (id) => {
-    try {
-      // Find the inquiry being deleted
-      const inquiryToDelete = inquiries.find(inq => inq.inquiryId === id);
-      const inquiryNumber = inquiryToDelete ? inquiryToDelete.quotationNumber : 'Unknown';
-      
-      // In a real app, this would call an API
-      inquiryService.delete(id);
-      
-      // Update local state to remove the deleted inquiry
-      setInquiries(inquiries.filter(inq => inq.inquiryId !== id));
-      
-      notifySuccess(`Inquiry "${inquiryNumber}" successfully deleted`);
-    } catch (error) {
-      notifyError(`Error deleting inquiry: ${error.message || 'Unknown error'}`);
-    }
+  const handleAddQuotation = () => {
+    console.log("Add quotation clicked");
+    navigate(`/addCostEst/${inquiryId}`);
+    notifySuccess('Creating new cost estimation version');
+  };
+
+  const handleEditEstimation = (id) => {
+    navigate(`/editCostEstimation/${inquiryId}/${id}`);
+    console.log(`Edit cost estimation ${id} clicked`);
   };
   
-  const handleViewInquiry = (id) => {
-    notifyDefault(`Viewing inquiry #${id}`);
+  const handleViewEstimation = (id) => {
+    console.log(`View cost estimation ${id} clicked`);
+    navigate(`/costEstView/${inquiryId}/${id}`);
   };
 
-  const handleCostEstimation = (id) => {
-    navigate(`/estimation/costEstimation/${id}`);
-    notifyDefault(`Preparing cost estimation for inquiry #${id}`);
+  const handleExportPDF = (id) => {
+    console.log(`Export PDF for cost estimation ${id} clicked`);
+    notifySuccess(`Exporting cost estimation #${id} as PDF`);
   };
 
-  // Custom render component for quotation number with status
-  const renderQuotationNumberCell = (params) => {
-    const inquiry = inquiries.find(inq => inq.inquiryId === params.row.id) || {};
-    const status = inquiry.inquiryStatus;
-    const quotationNumber = params.value;
-
-    // Determine status color based on inquiry status
-    const getStatusColor = (status) => {
-      switch (status?.toUpperCase()) {
-        case 'ACTIVE':
-          return 'bg-green-500';
-        case 'REJECTED':
-          return 'bg-red-500';
-      }
-    };
-
+  const handleJobRegistration = (id) => {
+    console.log(`Job registration for cost estimation ${id} clicked`);
+    navigate(`/jobRegistration/${id}`);
+    notifySuccess(`Proceeding to job registration for accepted quotation #${id}`);
+  };
+  
+  // Custom render cell for estimation status
+  const renderStatusCell = (params) => {
+    const status = params.value;
+    let statusColor = '';
+    let bgColor = '';
+    
+    switch(status) {
+      case 'ACCEPTED':
+        statusColor = 'text-green-700';
+        bgColor = 'bg-green-100';
+        break;
+      case 'SUBMITTED':
+        statusColor = 'text-blue-700';
+        bgColor = 'bg-blue-100';
+        break;
+      case 'DRAFT':
+        statusColor = 'text-yellow-700';
+        bgColor = 'bg-yellow-100';
+        break;
+      case 'REJECTED':
+        statusColor = 'text-red-700';
+        bgColor = 'bg-red-100';
+        break;
+      default:
+        statusColor = 'text-gray-700';
+        bgColor = 'bg-gray-100';
+    }
+    
     return (
-      <div className="flex items-center mt-4">
-        <div className={`w-2 h-2 rounded-full mr-2 ${getStatusColor(status)}`}></div>
-        <span className="text-black text-sm">{quotationNumber}</span>
+      <div className={`inline-block ml-12 px-2 py-1 rounded-full ${statusColor} ${bgColor} text-xs font-medium`}>
+        {status}
       </div>
     );
   };
@@ -224,39 +252,46 @@ const InquiryPage = () => {
   const renderActionsCell = (params) => {
     return (
       <div className="flex mt-2 gap-2 items-center">
+        
+        {/* View button - shown for all statuses */}
         <div 
-          className="text-[#3B50DF] hover:text-blue-900 cursor-pointer"
-          onClick={() => handleEditInquiry(params.id)}
-          title="Edit Inquiry"
+          className="text-[#3B50DF] hover:text-green-500 cursor-pointer"
+          onClick={() => handleViewEstimation(params.id)}
+          title="View Cost Estimation Details"
         >
-          <FaEdit size={isMobile ? 16 : 18} />
+          <FaEye size={isMobile ? 16 : 18} />
         </div>
+        
+        {/* Export PDF button - shown for all statuses */}
         <div 
-          className="text-[#3B50DF] hover:text-red-500 cursor-pointer"
-          onClick={() => handleDeleteInquiry(params.id)}
-          title="Delete Inquiry"
+          className="text-[#3B50DF] hover:text-orange-500 cursor-pointer"
+          onClick={() => handleAddVersion(params.id)}
+          title="Duplicate New Vesion"
         >
-          <MdDelete size={isMobile ? 16 : 18} />
+          <BiSolidDuplicate size={isMobile ? 16 : 18} />
         </div>
-        <Link 
-          to={`/inquiryView/${params.id}`} 
-          state={{ selectedInquiryId: params.id }}
-        >
+
+        {/* Edit button - only shown for Draft status */}
+        {params.row.status === 'DRAFT' && (
           <div 
-            className="text-[#3B50DF] hover:text-green-500 cursor-pointer"
-            title="View Inquiry Details"
-            onClick={() => handleViewInquiry(params.id)}
+            className="text-[#3B50DF] hover:text-blue-900 cursor-pointer"
+            onClick={() => handleEditEstimation(params.id)}
+            title="Edit Cost Estimation"
           >
-            <FaEye size={isMobile ? 16 : 18} />
+            <FaEdit size={isMobile ? 16 : 18} />
           </div>
-        </Link>
-        <button
-          onClick={() => handleCostEstimation(params.id)}
-          className="ml-2 bg-[#3C50E0] hover:bg-blue-600 text-white text-xs px-2 py-1 rounded-lg text-center"
-          title="Generate Cost Estimation"
-        >
-          Cost Estimation
-        </button>
+        )}
+        
+        {/* Job Registration button - only shown for Accepted status */}
+        {params.row.status === 'ACCEPTED' && (
+          <button
+            onClick={() => handleJobRegistration(params.id)}
+            className="ml-2 bg-[#3C50E0] hover:bg-green-600 text-white text-xs px-2 py-1 rounded-lg text-center"
+            title="Register as Job"
+          >
+            Job Registration
+          </button>
+        )}
       </div>
     );
   };
@@ -267,19 +302,16 @@ const InquiryPage = () => {
     const baseColumns = [
       { 
         field: 'quotationNumber', 
-        headerName: 'Quotation Number', 
+        headerName: 'Quotation Version', 
         flex: 1,
         minWidth: 180,
         headerAlign: 'left',
         align: 'left',
-        renderCell: renderQuotationNumberCell,
-        headerClassName: 'quotation-column-header',
       },
       { 
-        field: 'projectName', 
-        headerName: 'Project Name', 
-        flex: 1,
-        minWidth: 200,
+        field: 'date', 
+        headerName: 'Date', 
+        width: 180,
         headerAlign: 'left',
         align: 'left'
       },
@@ -298,11 +330,11 @@ const InquiryPage = () => {
     // Additional columns for larger screens
     const additionalColumns = [
       { 
-        field: 'customerName', 
-        headerName: 'Customer', 
-        flex: 1,
-        minWidth: 180,
-        headerAlign: 'left',
+        field: 'status', 
+        headerName: 'Status', 
+        width: 180,
+        renderCell: renderStatusCell,
+        headerAlign: 'center',
         align: 'left'
       }
     ];
@@ -310,23 +342,21 @@ const InquiryPage = () => {
     return isMobile ? baseColumns : [...baseColumns.slice(0, 1), ...additionalColumns, baseColumns[1], baseColumns[2]];
   };
   
-  // Filter inquiries based on search term
-  const filteredInquiries = searchTerm.trim() === '' 
-    ? inquiries 
-    : inquiries.filter(inquiry => 
-        (inquiry.quotationNumber && inquiry.quotationNumber.toLowerCase().includes(searchTerm.toLowerCase())) ||
-        (inquiry.projectName && inquiry.projectName.toLowerCase().includes(searchTerm.toLowerCase())) ||
-        (inquiry.customerName && inquiry.customerName.toLowerCase().includes(searchTerm.toLowerCase()))
+  // Filter cost estimations based on search term
+  const filteredEstimations = searchTerm.trim() === '' 
+    ? costEstimations 
+    : costEstimations.filter(est => 
+        (est.quotationNumber && est.quotationNumber.toLowerCase().includes(searchTerm.toLowerCase())) ||
+        (est.status && est.status.toLowerCase().includes(searchTerm.toLowerCase())) ||
+        (est.date && est.date.toLowerCase().includes(searchTerm.toLowerCase()))
       );
   
-  // Prepare data for DataGrid
-  const rows = filteredInquiries.map(inquiry => ({
-    id: inquiry.inquiryId,
-    quotationNumber: inquiry.quotationNumber,
-    projectName: inquiry.projectName,
-    customerName: inquiry.customerName,
-    status: inquiry.inquiryStatus,
-    date: inquiry.projectReturnDate
+  // Prepare data for DataGrid with ID as is from data
+  const rows = filteredEstimations.estimations.map(est => ({
+    id: est.estimationId, 
+    quotationNumber: est.quotationVersion,
+    status: est.estimationStatus,
+    date: est.lastModifiedDate,
   }));
 
   return (
@@ -360,11 +390,21 @@ const InquiryPage = () => {
         <div className="p-2 sm:p-4 md:p-6 flex-1 overflow-auto">
           {/* Toast notifications */}
           <ToastContainer className="mt-[70px]" />
-          <h1 className="text-xl md:text-2xl font-semibold mb-2 md:mb-4 pl-2">Inquiries</h1>
+          
+          {/* Header with Back Button */}
+          <div className="flex items-center mb-4 pl-2">
+            <h1 className="text-xl md:text-2xl font-semibold">
+              Cost Estimation {quotationDetails && 
+                <span className="text-gray-600 text-sm font-normal">
+                  [{quotationDetails.quotationNumber}]
+                </span>
+              }
+            </h1>
+          </div>
 
-          {/* Inquiry Table Card */}
+          {/* Cost Estimation Versions Table Card */}
           <div className="bg-white rounded-lg shadow">
-            {/* Search and Add Inquiry */}
+            {/* Search and Add Version */}
             <div className="p-3 md:p-4 flex flex-col sm:flex-row sm:justify-between gap-3 sm:gap-0">
               <div className="flex items-center w-full sm:w-auto">
                 <div 
@@ -387,14 +427,13 @@ const InquiryPage = () => {
                   />
                 </div>
               </div>
-              <Link to="/addInquiry">
-                <button 
-                  className="bg-[#3C50E0] hover:bg-blue-700 text-white px-3 py-2 text-sm rounded-lg flex items-center justify-center sm:justify-start gap-2 focus:outline-none"
-                >
-                  <Plus size={16} />
-                  <span>Add Inquiry</span>
-                </button>
-              </Link>
+              <button 
+                onClick={handleAddQuotation}
+                className="bg-[#3C50E0] hover:bg-blue-700 text-white px-3 py-2 text-sm rounded-lg flex items-center justify-center sm:justify-start gap-2 focus:outline-none"
+              >
+                <Plus size={16} />
+                <span>Add Quotation</span>
+              </button>
             </div>
             <hr />
 
@@ -404,11 +443,11 @@ const InquiryPage = () => {
                 <DataGrid 
                   rows={rows} 
                   columns={getColumns()} 
+                  getRowId={(row) => row.id || row.estimationId }
                   pagination
                   paginationModel={paginationModel}
                   onPaginationModelChange={(model) => {
                     setPaginationModel(model);
-                    notifyDefault(`Page ${model.page + 1} loaded`);
                   }}
                   pageSizeOptions={[5]}
                   disableRowSelectionOnClick
@@ -421,7 +460,7 @@ const InquiryPage = () => {
                     '& .MuiDataGrid-row:hover': {
                       backgroundColor: '#f8fafc',
                     },
-                    '& .quotation-column-header .MuiDataGrid-columnHeaderTitleContainer': {
+                    '& .name-column-header .MuiDataGrid-columnHeaderTitleContainer': {
                       paddingLeft: '15px',
                       fontWeight: '600',
                     },
@@ -453,4 +492,4 @@ const InquiryPage = () => {
   );
 };
 
-export default InquiryPage;
+export default CostEstimationPage;

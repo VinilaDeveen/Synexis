@@ -140,7 +140,7 @@ const AddUnitPage = () => {
         notifySuccess('Unit created successfully!');
       }
       // Redirect to units list page after successful operation
-      navigate('/unit');
+      navigate('/inventory/unit');
     } catch (err) {
       console.error('Error saving unit:', err);
       isEditMode 
@@ -152,7 +152,7 @@ const AddUnitPage = () => {
   };
 
   const handleCancel = () => {
-    navigate('/unit');
+    navigate('/inventory/unit');
   };
 
   if (loading && isEditMode) {

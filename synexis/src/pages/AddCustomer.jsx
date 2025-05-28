@@ -198,7 +198,7 @@ const AddCustomerPage = () => {
         notifySuccess('Customer added successfully');
       }
       // Redirect to customers list page after successful operation
-      navigate('/customer');
+      navigate('/people/customer');
     } catch (err) {
       console.error('Error saving customer:', err);
       isEditMode
@@ -210,7 +210,7 @@ const AddCustomerPage = () => {
   };
   
   const handleCancel = () => {
-    navigate('/customer');
+    navigate('/people/customer');
   };
 
   if (loading && isEditMode) {
@@ -469,7 +469,7 @@ const AddCustomerPage = () => {
                     {/* Address Line 1 Field */}
                     <div>
                       <label htmlFor="addressLine1" className="block mb-1">
-                        Address: <br/>Line 1<span className="text-red-500">*</span>
+                        Line 1<span className="text-red-500">*</span>
                       </label>
                       <input
                         type="text"

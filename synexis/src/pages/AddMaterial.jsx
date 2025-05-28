@@ -367,7 +367,7 @@ const handleOtherUnitChange = (e) => {
         await materialService.create(formDataToSend);
       }
       // Redirect to materials list page after successful operation
-      navigate('/material');
+      navigate('/inventory/material');
     } catch (err) {
       console.error('Error saving material:', err);
       isEditMode
@@ -379,7 +379,7 @@ const handleOtherUnitChange = (e) => {
   };
   
   const handleCancel = () => {
-    navigate('/material');
+    navigate('/inventory/material');
   };
 
   if (loading && isEditMode) {

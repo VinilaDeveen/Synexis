@@ -180,7 +180,7 @@ const CustomerView = () => {
   };
 
   const handleEditToCustomer = () => {
-    navigate(`/editcustomer/${selectedCustomerId}`);
+    navigate(`/people/editcustomer/${selectedCustomerId}`);
   };
 
   const handleDeleteCustomer = async () => {
@@ -426,7 +426,7 @@ const CustomerView = () => {
                                 <div className="flex items-center justify-between mb-2">
                                   <div className="flex items-center">
                                     <FileText className="w-5 h-5 text-blue-500 mr-2" />
-                                    <span className="font-medium">Business Registration Certificate (BRC)</span>
+                                    <span className="font-medium">Business Registration Certificate</span>
                                   </div>
                                 </div>
                                 {selectedCustomer.brcdocUrl ? (

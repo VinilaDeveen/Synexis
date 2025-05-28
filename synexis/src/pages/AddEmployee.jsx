@@ -231,7 +231,7 @@ const AddEmployeePage = () => {
         notifySuccess('Employee added successfully');
       }
       // Redirect to employees list page after successful operation
-      navigate('/employee');
+      navigate('/people/employee');
     } catch (err) {
       console.error('Error saving employee:', err);
       isEditMode
@@ -243,7 +243,7 @@ const AddEmployeePage = () => {
   };
   
   const handleCancel = () => {
-    navigate('/employee');
+    navigate('/people/employee');
   };
 
   if (loading && isEditMode) {

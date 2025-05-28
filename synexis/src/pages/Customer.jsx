@@ -145,11 +145,11 @@ const CustomerPage = () => {
   };
 
   const handleEditCustomer = (id) => {
-    navigate(`/editCustomer/${id}`);
+    navigate(`/people/editCustomer/${id}`);
   };
 
   const handleViewCustomer = (id) => {
-    navigate(`/customerView/${id}`);
+    navigate(`/people/customerView/${id}`);
   };
 
   const handleDeleteCustomer = (id) => {
