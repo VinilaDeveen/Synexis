@@ -188,18 +188,18 @@ const CostEstimationPage = () => {
 
   const handleAddQuotation = () => {
     console.log("Add quotation clicked");
-    navigate(`/addCostEst/${inquiryId}`);
+    navigate(`/estimation/addCostEstimation/${inquiryId}`);
     notifySuccess('Creating new cost estimation version');
   };
 
   const handleEditEstimation = (id) => {
-    navigate(`/editCostEstimation/${inquiryId}/${id}`);
+    navigate(`/estimation/editCostEstimation/${inquiryId}/${id}`);
     console.log(`Edit cost estimation ${id} clicked`);
   };
   
   const handleViewEstimation = (id) => {
     console.log(`View cost estimation ${id} clicked`);
-    navigate(`/costEstView/${inquiryId}/${id}`);
+    navigate(`/estimation/CostEstimationView/${inquiryId}/${id}`);
   };
 
   const handleExportPDF = (id) => {

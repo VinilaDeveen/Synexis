@@ -8,6 +8,7 @@ export const materialService = {
   getAllParentCategories: () => axios.get(`${API_BASE_URL}/parentCategoryDropDown`),
   getSideDrop: () => axios.get(`${API_BASE_URL}/sideDrop`),
   getById: (id) => axios.get(`${API_BASE_URL}/${id}`),
+  getAllMaterialBySearch: (searchTerm) => axios.get(`${API_BASE_URL}/search?searchMaterial=${searchTerm}`),
   create: (material) => axios.post(`${API_BASE_URL}`, material),
   update: (id, material) => axios.put(`${API_BASE_URL}/${id}`, material),
   delete: (id) => axios.delete(`${API_BASE_URL}/${id}`),
