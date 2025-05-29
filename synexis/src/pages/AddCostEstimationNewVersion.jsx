@@ -19,11 +19,10 @@ import ConfirmModal from '../components/ConfirmModal';
 import { costEstimationService } from '../services/costEstimationService';
 import { recentActivityService } from '../services/recentActivityService';
 
-const AddCostEstimationPage = () => {
+const AddCostEstimationNewVersionPage = () => {
   const { notifySuccess, notifyError, notifyWarning, notifyDefault } = useNotification();
   const { inquiryId } = useParams(); 
   const { id } = useParams(); // Get the estimation ID from URL if editing
-  const isEditMode = !!id;
   const navigate = useNavigate();
 
   // Add loading state for edit mode
@@ -270,7 +269,6 @@ const AddCostEstimationPage = () => {
   // In the useEffect for fetching estimation data, update the data transformation:
 
   useEffect(() => {
-    if (isEditMode) {
       const fetchEstimationData = async () => {
         try {
           const response = await costEstimationService.getById(id);
@@ -380,11 +378,7 @@ const AddCostEstimationPage = () => {
       };
       
       fetchEstimationData();
-    } else {
-      setLoading(false);
-      isInitialLoad.current = false;
-    }
-  }, [id, isEditMode]);
+  }, [id]);
 
   // Add markup percentage state
   const [markupPercentages, setMarkupPercentages] = useState(() => {
@@ -521,25 +515,20 @@ const [markupsInitialized, setMarkupsInitialized] = useState(false);
     try {
       const exportData = exportDataForBackendWithSectionMarkups('DRAFT');
       
-      if (isEditMode) {
-        await costEstimationService.update(id, exportData);
-        notifySuccess('Estimation draft updated successfully!');
-      } else {
-        await costEstimationService.create(exportData);
-        notifySuccess('Estimation draft created successfully!');
-      }
+      await costEstimationService.create(exportData);
 
+      notifySuccess('Estimation draft created successfully!');
       navigate(`/estimation/costEstimation/${inquiryId}`);
       
     } catch (error) {
       console.error('Export error:', error);
       
       if (error.response) {
-        notifyError(`Failed to ${isEditMode ? 'update' : 'create'} draft: ${error.response.status}`);
+        notifyError(`Failed to create draft: ${error.response.status}`);
       } else if (error.request) {
         notifyError('Network error: No response from server');
       } else {
-        notifyError(`Error ${isEditMode ? 'updating' : 'creating'} draft`);
+        notifyError(`Error creating draft`);
       }
       setDrafting(false);
     }
@@ -551,25 +540,21 @@ const [markupsInitialized, setMarkupsInitialized] = useState(false);
     try {
       const exportData = exportDataForBackendWithSectionMarkups('SUBMITTED');
       
-      if (isEditMode) {
-        await costEstimationService.update(id, exportData);
-        notifySuccess('Estimation updated successfully!');
-      } else {
-        await costEstimationService.create(exportData);
-        notifySuccess('Estimation created successfully!');
-      }
 
+      await costEstimationService.create(exportData);
+
+      notifySuccess('Estimation created successfully!');
       navigate(`/estimation/costEstimation/${inquiryId}`);
       
     } catch (error) {
       console.error('Export error:', error);
       
       if (error.response) {
-        notifyError(`Failed to ${isEditMode ? 'update' : 'create'} estimation: ${error.response.status}`);
+        notifyError(`Failed to create estimation: ${error.response.status}`);
       } else if (error.request) {
         notifyError('Network error: No response from server');
       } else {
-        notifyError(`Error ${isEditMode ? 'updating' : 'creating'} estimation`);
+        notifyError(`Error creating estimation`);
       }
       setSubmitting(false);
     }
@@ -583,14 +568,14 @@ const [markupsInitialized, setMarkupsInitialized] = useState(false);
         onClick={handleExportToBackend}
         className="bg-[#3C50E0] text-white px-6 py-2 rounded mr-4 hover:bg-blue-700 disabled:bg-[ #3C50E0]"
       >
-        {submitting ? <ButtonLoader text={isEditMode ? "Updating..." : "Submitting..."} /> : isEditMode ? 'Update' : 'Submit'}
+        {submitting ? <ButtonLoader text="Submitting..." /> : 'Submit'}
       </button>
       <button 
         disabled={drafting}
         onClick={handleSaveAsDraft}
         className="bg-[#3C50E0] text-white px-6 py-2 rounded mr-4 hover:bg-blue-700 disabled:bg-[ #3C50E0]"
       >
-        {drafting ? <ButtonLoader text={isEditMode ? "Saving..." : "Saving..."} /> : isEditMode ? 'Save as Draft' : 'Save as Draft'}
+        {drafting ? <ButtonLoader text="Saving..." /> : 'Save as Draft'}
       </button>
       <button 
         type="button"
@@ -876,7 +861,7 @@ const [markupsInitialized, setMarkupsInitialized] = useState(false);
   const renderPageHeader = () => (
     <div className="mb-4">
       <h1 className="text-xl md:text-2xl font-semibold mb-2">
-        {isEditMode ? 'Edit Cost Estimation' : 'New Cost Estimation'}
+        {'New Cost Estimation'}
       </h1>
       <p className="text-gray-600 text-sm">
         Quotation Version: {quotationNumber || '[New Estimation]'}
@@ -1791,4 +1776,4 @@ const renderLaborRateRow = () => (
   );
 };
 
-export default AddCostEstimationPage;
+export default AddCostEstimationNewVersionPage;

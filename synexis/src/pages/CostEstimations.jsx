@@ -180,9 +180,9 @@ const CostEstimationPage = () => {
 
  //complete handleAddVersion logic edit view
 
-  const handleAddVersion = () => {
+  const handleAddVersion = (id) => {
     console.log("Add version clicked");
-    navigate(`/createCostEstimation/${inquiryId}`);
+    navigate(`/estimation/createCostEstimation/${inquiryId}/${id}`);
     notifySuccess('Creating new cost estimation version');
   };
 
