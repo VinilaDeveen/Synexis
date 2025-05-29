@@ -199,7 +199,7 @@ const CostEstimationPage = () => {
   
   const handleViewEstimation = (id) => {
     console.log(`View cost estimation ${id} clicked`);
-    navigate(`/estimation/CostEstimationView/${inquiryId}/${id}`);
+    navigate(`/estimation/costEstimationView/${inquiryId}/${id}`);
   };
 
   const handleExportPDF = (id) => {

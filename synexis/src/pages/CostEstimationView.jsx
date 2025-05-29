@@ -9,17 +9,14 @@ import {
 } from '../components/loaders';
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { Search, Plus, Menu, ChevronDown, ChevronRight, Trash2 } from 'lucide-react';
+import { Search, Menu, ChevronDown, ChevronRight } from 'lucide-react';
 import { LuHistory } from "react-icons/lu";
 import { ToastContainer } from 'react-toastify';
 import { useNotification } from '../hooks/useNotification';
-import NewItemAddModel from '../components/NewItemAddModal';
-import NewMaterialAddModel from '../components/NewMaterialAddModel';
-import ConfirmModal from '../components/ConfirmModal'; 
 import { costEstimationService } from '../services/costEstimationService';
 import { recentActivityService } from '../services/recentActivityService';
 
-const AddCostEstimationPage = () => {
+const CostEstimationViewPage = () => {
   const { notifySuccess, notifyError, notifyWarning, notifyDefault } = useNotification();
   const { inquiryId } = useParams(); 
   const { id } = useParams(); // Get the estimation ID from URL if editing
@@ -31,8 +28,6 @@ const AddCostEstimationPage = () => {
   const [recentActivities, setRecentActivities] = useState([]);
   const [showActivities, setShowActivities] = useState(false);
   const [loading, setLoading] = useState(true); // Start loading if in edit mode
-  const [submitting, setSubmitting] = useState(false);
-  const [drafting, setDrafting] = useState(false);
   const isInitialLoad = useRef(true);
   
   // State for sidebar visibility
@@ -107,17 +102,7 @@ const AddCostEstimationPage = () => {
 
 
 
-  // Modal states
-  const [showItemModel, setShowItemModel] = useState(false);
-  const [showMaterialModel, setShowMaterialModel] = useState(false);
-  const [selectedSection, setSelectedSection] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
-  
-  // New confirm modal states      
-  const [showConfirmModal, setShowConfirmModal] = useState(false);
-  const [confirmAction, setConfirmAction] = useState(null);
-  const [confirmMessage, setConfirmMessage] = useState('');
-  const [confirmData, setConfirmData] = useState(null);
 
   // Add state for electrical and mechanical costs
   const [electricalCost, setElectricalCost] = useState({
@@ -270,7 +255,6 @@ const AddCostEstimationPage = () => {
   // In the useEffect for fetching estimation data, update the data transformation:
 
   useEffect(() => {
-    if (isEditMode) {
       const fetchEstimationData = async () => {
         try {
           const response = await costEstimationService.getById(id);
@@ -380,11 +364,8 @@ const AddCostEstimationPage = () => {
       };
       
       fetchEstimationData();
-    } else {
-      setLoading(false);
-      isInitialLoad.current = false;
-    }
-  }, [id, isEditMode]);
+    
+  }, [id]);
 
   // Add markup percentage state
   const [markupPercentages, setMarkupPercentages] = useState(() => {
@@ -453,154 +434,11 @@ const [markupsInitialized, setMarkupsInitialized] = useState(false);
   const [finalLaborHours, setFinalLaborHours] = useState({
     total: 0,
     byItem: {}
-  });
-
-  // Alternative version with section-specific markup percentages
-  const exportDataForBackendWithSectionMarkups = (status = 'SUBMITTED') => {
-    const outputData = {
-      inquiryId: inquiryId,
-      estimationStatus: status,
-      labourRate: laborRate,
-      otherCostRate: otherCostRate,
-      items: []
-    };
-
-    items.forEach((item) => {
-      const itemId = item.id;
-      const itemName = item.name;
-      const itemQuantity = itemQuantities[itemId] || 0;
-      const itemMarkups = markupPercentages[itemId] || {};
-
-      const itemMaterials = [];
-
-      sections.forEach(section => {
-        section.materials.forEach(material => {
-          const itemIndex = items.findIndex(i => i.id === itemId);
-          const quantity = material.quantities[itemIndex] || 0;
-
-          if (quantity > 0) {
-            itemMaterials.push({
-              materialId: material.id,
-              materialQuantity: quantity,
-              unitPrice: material.unitPrice || material.marketPrice || 0,
-              discount: material.discount || 0
-            });
-          }
-        });
-      });
-
-      const itemData = {
-        itemName: itemName,
-        itemQuantity: itemQuantity,
-        switchGearComponentMarkup: itemMarkups.switchGearComponentMarkup || 0,
-        controlAccessoryMarkup: itemMarkups.controlAccessoryMarkup || 0,
-        busBarMarkup: itemMarkups.busBarMarkup || 0,
-        wiringMarkup: itemMarkups.wiringMarkup || 0,
-        otherAccessoryMarkup: itemMarkups.otherAccessoryMarkup || 0,
-        electricalLabourMarkup: itemMarkups.electricalLabourMarkup || 0,
-        transportMarkup: itemMarkups.transportMarkup || 0,
-        enclosureMarkup: itemMarkups.enclosureMarkup || 0,
-        itemMaterials: itemMaterials
-      };
-
-      if (itemMaterials.length > 0 || itemQuantity > 0) {
-        outputData.items.push(itemData);
-      }
-    });
-
-    return outputData;
-  };
-  
+  });  
 
   const handleCancel = () => {
     navigate(`/estimation/costEstimation/${inquiryId}`);
   };
-
-  const handleSaveAsDraft = async () => {
-    setDrafting(true);
-    try {
-      const exportData = exportDataForBackendWithSectionMarkups('DRAFT');
-      
-      if (isEditMode) {
-        await costEstimationService.update(id, exportData);
-        notifySuccess('Estimation draft updated successfully!');
-      } else {
-        await costEstimationService.create(exportData);
-        notifySuccess('Estimation draft created successfully!');
-      }
-
-      navigate(`/estimation/costEstimation/${inquiryId}`);
-      
-    } catch (error) {
-      console.error('Export error:', error);
-      
-      if (error.response) {
-        notifyError(`Failed to ${isEditMode ? 'update' : 'create'} draft: ${error.response.status}`);
-      } else if (error.request) {
-        notifyError('Network error: No response from server');
-      } else {
-        notifyError(`Error ${isEditMode ? 'updating' : 'creating'} draft`);
-      }
-      setDrafting(false);
-    }
-  };
-
-  // Modify the export function to handle both create and update
-  const handleExportToBackend = async () => {
-    setSubmitting(true);
-    try {
-      const exportData = exportDataForBackendWithSectionMarkups('SUBMITTED');
-      
-      if (isEditMode) {
-        await costEstimationService.update(id, exportData);
-        notifySuccess('Estimation updated successfully!');
-      } else {
-        await costEstimationService.create(exportData);
-        notifySuccess('Estimation created successfully!');
-      }
-
-      navigate(`/estimation/costEstimation/${inquiryId}`);
-      
-    } catch (error) {
-      console.error('Export error:', error);
-      
-      if (error.response) {
-        notifyError(`Failed to ${isEditMode ? 'update' : 'create'} estimation: ${error.response.status}`);
-      } else if (error.request) {
-        notifyError('Network error: No response from server');
-      } else {
-        notifyError(`Error ${isEditMode ? 'updating' : 'creating'} estimation`);
-      }
-      setSubmitting(false);
-    }
-  };
-
-  // Update the export button text based on mode
-  const ExportButton = () => (
-    <div className='flex justify-end mt-4'>
-      <button 
-        disabled={submitting}
-        onClick={handleExportToBackend}
-        className="bg-[#3C50E0] text-white px-6 py-2 rounded mr-4 hover:bg-blue-700 disabled:bg-[ #3C50E0]"
-      >
-        {submitting ? <ButtonLoader text={isEditMode ? "Updating..." : "Saving..."} /> : isEditMode ? 'Update' : 'Save'}
-      </button>
-      <button 
-        disabled={drafting}
-        onClick={handleSaveAsDraft}
-        className="bg-[#3C50E0] text-white px-6 py-2 rounded mr-4 hover:bg-blue-700 disabled:bg-[ #3C50E0]"
-      >
-        {drafting ? <ButtonLoader text={isEditMode ? "Saving..." : "Saving..."} /> : isEditMode ? 'Save as Draft' : 'Save as Draft'}
-      </button>
-      <button 
-        type="button"
-        onClick={handleCancel}
-        className='bg-gray-100 text-black border border-[#3B50DF] px-4 py-2 rounded hover:bg-gray-100'
-      >
-        Cancel
-      </button>
-    </div>
-  );
 
 // Find the normal labor hour price in useEffect
   useEffect(() => {
@@ -855,28 +693,12 @@ const [markupsInitialized, setMarkupsInitialized] = useState(false);
     return () => clearTimeout(timer);
   }, []);
 
-  //////////////////////
-  const handleMarkupChange = (itemId, sectionName, value) => {
-  const parsedValue = parseFloat(value);
-  setMarkupPercentages(prev => ({
-    ...prev,
-    [itemId]: {
-      ...(prev[itemId] || {}),
-      [sectionName]: parsedValue
-    }
-  }));
-};
-
-  const handleOtherCostRateChange = (value) => {
-    const parsedValue = parseFloat(value) || 0;
-    setOtherCostRate(parsedValue);
-  };
 
   // Update the page header to show edit mode
   const renderPageHeader = () => (
     <div className="mb-4">
       <h1 className="text-xl md:text-2xl font-semibold mb-2">
-        {isEditMode ? 'Edit Cost Estimation' : 'New Cost Estimation'}
+        { 'Cost Estimation' }
       </h1>
       <p className="text-gray-600 text-sm">
         Quotation Version: {quotationNumber || '[New Estimation]'}
@@ -923,14 +745,7 @@ const [markupsInitialized, setMarkupsInitialized] = useState(false);
       </td>
       <td className="px-3 py-2 text-center">
         <div className="flex items-center justify-center">
-          <input
-            type="number"
-            value={otherCostRate}
-            onChange={(e) => handleOtherCostRateChange(e.target.value)}
-            className="w-16 bg-white text-center border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
-            min="0"
-            step="0.01"
-          />
+            {otherCostRate}
           <span className="ml-1">%</span>
         </div>
       </td>
@@ -961,10 +776,6 @@ const [markupsInitialized, setMarkupsInitialized] = useState(false);
     </tr>
   );
 
-  const handleLaborRateChange = (value) => {
-    const parsedValue = parseFloat(value) || 0;
-    setLaborRate(parsedValue);
-  };
 
   const renderTotalPriceAfterMarkupRow = () => (
     <tr className="bg-blue-100">
@@ -1021,14 +832,7 @@ const renderLaborRateRow = () => (
     </td>
     <td className="px-3 py-2 text-center">
       <div className="flex items-center justify-center">
-        <input
-          type="number"
-          value={laborRate}
-          onChange={(e) => handleLaborRateChange(e.target.value)}
-          className="w-16 bg-white text-center border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
-          min="0"
-          step="0.01"
-        />
+          {laborRate}
         <span className="ml-1">%</span>
       </div>
     </td>
@@ -1118,14 +922,7 @@ const renderLaborRateRow = () => (
   return (
     <td key={item.id} className="px-3 py-2 text-center">
       <div className="flex items-center justify-center">
-        <input
-          type="number"
-          value={typeof value === 'number' ? value : 0}
-          onChange={(e) => handleMarkupChange(String(item.id), markupFieldName, e.target.value)}
-          className="w-16 bg-white text-center border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
-          min="0"
-          step="0.01"
-        />
+          {typeof value === 'number' ? value : 0}
         <span className="ml-1">%</span>
       </div>
     </td>
@@ -1179,144 +976,6 @@ const renderLaborRateRow = () => (
     ));
   };
   
-  // Handle adding a new material (column)
-  const handleAddMaterial = () => {
-    setShowMaterialModel(true);
-  };
-  
-  // Handle adding a new item (row)
-  const handleAddItem = () => {
-    setShowItemModel(true);
-  };
-  
-  // Create a new material (column)
-  const createItem = (itemName) => {
-    const newItem = {
-      id: items.length + 1,
-      name: itemName
-    };
-    
-    // Add the new material
-    setItems([...items, newItem]);
-    
-    // Update all items to have a quantity for the new material
-    setSections(sections.map(section => {
-      return {
-        ...section,
-        materials: section.materials.map(material => {
-          return {
-            ...material,
-            quantities: [...material.quantities, 0]
-          };
-        })
-      };
-    }));
-    
-    // Update item quantities
-    
-    ({
-      ...itemQuantities,
-      [newItem.id]: 0
-    });
-    
-    notifySuccess(`Item "${itemName}" added successfully`);
-    setShowItemModel(false);
-  };
-  
-  // Create a new item in a specific section with all material details
-  const createMaterial = (materialData, sectionId) => {
-    setSections(sections.map(section => {
-      if (section.id === sectionId) {
-        return {
-          ...section,
-          materials: [
-            ...section.materials,
-            {
-              id: section.materials.length + 1,
-              name: materialData.name,
-              marketPrice: materialData.marketPrice || 0,
-              unitPrice: materialData.unitPrice || 0,
-              discount: materialData.discount || 0,
-              discountedPrice: 0,
-              material: materialData.material || '-',
-              materialDescription: materialData.materialDescription || '-',
-              materialPartNumber: materialData.materialPartNumber || '-',
-              materialMake: materialData.materialMake || '-',
-              countryOfOrigin: materialData.countryOfOrigin || 0,
-              quantities: new Array(items.length).fill(0)
-            }
-          ]
-        };
-      }
-      return section;
-    }));
-    
-    notifySuccess(`Material "${materialData.name}" added to ${sections.find(s => s.id === sectionId).name}`);
-    setShowMaterialModel(false);
-    setSelectedSection(null);
-    setSearchTerm('');
-  };
-  
-  // Handle quantity change for individual items
-  const handleQuantityChange = (e, itemIndex, sectionId, materialId) => {
-    const value = parseInt(e.target.value) || 0;
-    
-    setSections(sections.map(section => {
-      if (section.id === sectionId) {
-        return {
-          ...section,
-          materials: section.materials.map(material => {
-            if (material.id === materialId) {
-              const newQuantities = [...material.quantities];
-              newQuantities[itemIndex] = value;
-              return {
-                ...material,
-                quantities: newQuantities
-              };
-            }
-            return material;
-          })
-        };
-      }
-      return section;
-    }));
-  };
-  
-  // Handle item quantity change in the first row
-  const handleItemQuantityChange = (itemId, value) => {
-    const parsedValue = parseInt(value) || 0;
-    setItemQuantities({
-      ...itemQuantities,
-      [itemId]: parsedValue
-    });
-  };
-  
-  // Handle price and discount changes
-  const handleMaterialDataChange = (sectionId, materialId, field, value) => {
-    setSections(sections.map(section => {
-      if (section.id === sectionId) {
-        return {
-          ...section,
-          materials: section.materials.map(material => {
-            if (material.id === materialId) {
-              let updatedMaterial = { ...material, [field]: value };
-              
-              // If market price or discount changed, recalculate discounted price
-              if (field === 'unitPrice' || field === 'discount') {
-                const unitPrice = field === 'unitPrice' ? value : material.unitPrice;
-                const discount = field === 'discount' ? value : material.discount;
-                updatedMaterial.discountedPrice = unitPrice * (1 - discount / 100);
-              }
-              
-              return updatedMaterial;
-            }
-            return material;
-          })
-        };
-      }
-      return section;
-    }));
-  };
   
   // Calculate total for each row
   const calculateRowTotal = (quantities) => {
@@ -1328,92 +987,7 @@ const renderLaborRateRow = () => (
       return acc + (qty * itemQty);
     }, 0);
   };
-
-  // Handle removing a material (column)
-  const handleRemoveItem = (itemId) => {
-    // Set up confirmation modal
-    setConfirmMessage(`Are you sure you want to remove this ? This will delete all quantity data associated with it.`);
-    setConfirmAction('removeItem');
-    setConfirmData(itemId);
-    setShowConfirmModal(true);
-  };
-
-  // Execute material removal after confirmation
-  const executeRemoveItem = (itemId) => {
-    const itemIndex = items.findIndex(i => i.id === itemId);
-    if (itemIndex === -1) return;
-    
-    const itemName = items.find(i => i.id === itemId).name;
-    
-    // Remove the material from the materials array
-    const updatedItems = items.filter(i => i.id !== itemId);
-    setItems(updatedItems);
-    
-    // Remove the quantity data for this material from all items
-    setSections(sections.map(section => {
-      return {
-        ...section,
-        materials: section.materials.map(material => {
-          return {
-            ...material,
-            quantities: material.quantities.filter((_, index) => index !== itemIndex)
-          };
-        })
-      };
-    }));
-    
-    // Remove from item quantities
-    const updatedItemQuantities = { ...itemQuantities };
-    delete updatedItemQuantities[itemId];
-    setItemQuantities(updatedItemQuantities);
-    
-    notifySuccess(`Item "${itemName}" removed successfully`);
-  };
   
-  // Handle removing an item (row)
-  const handleRemoveMaterial = (sectionId, materialId) => {
-    const section = sections.find(s => s.id === sectionId);
-    const material = section.materials.find(i => i.id === materialId);
-    
-    // Set up confirmation modal
-    setConfirmMessage(`Are you sure you want to remove "${material.name}" from ${section.name}?`);
-    setConfirmAction('removeMaterial');
-    setConfirmData({ sectionId, materialId });
-    setShowConfirmModal(true);
-  };
-  
-  // Execute material removal after confirmation
-  const executeRemoveMaterial = ({ sectionId, materialId }) => {
-    const section = sections.find(s => s.id === sectionId);
-    const material = section.materials.find(m => m.id === materialId);
-    
-    // Remove the material from the section
-    setSections(sections.map(section => {
-      if (section.id === sectionId) {
-        return {
-          ...section,
-          materials: section.materials.filter(material => material.id !== materialId)
-        };
-      }
-      return section;
-    }));
-    
-    notifySuccess(`Material "${material.name}" removed successfully`);
-  };
-  
-  // Handle confirm modal action
-  const handleConfirm = () => {
-    if (confirmAction === 'removeItem') {
-      executeRemoveItem(confirmData);
-    } else if (confirmAction === 'removeMaterial') {
-      executeRemoveMaterial(confirmData);
-    }
-    
-    // Reset and close modal
-    setShowConfirmModal(false);
-    setConfirmAction(null);
-    setConfirmData(null);
-  };
 
   // Render function for cost summary rows
   const renderCostSummaryRow = (label, costData) => (
@@ -1502,28 +1076,12 @@ const renderLaborRateRow = () => (
                 />
               </div>
             </div>
-            <div className="flex w-full sm:w-auto gap-2">
-              <button 
-                onClick={handleAddItem}
-                className="bg-[#3C50E0] hover:bg-blue-700 text-white px-3 py-2 text-sm rounded-lg flex items-center justify-center gap-2 focus:outline-none"
-              >
-                <Plus size={16} />
-                <span>Add Item</span>
-              </button>
-              <button 
-                onClick={handleAddMaterial}
-                className="bg-[#3C50E0] hover:bg-blue-700 text-white px-3 py-2 text-sm rounded-lg flex items-center justify-center gap-2 focus:outline-none"
-              >
-                <Plus size={16} />
-                <span>Add Material</span>
-              </button>
-            </div>
           </div>
 
           {/* Cost Estimation Table Card */}
           <div className="bg-white rounded-lg shadow overflow-hidden">
             {/* Table Container with fixed header */}
-            <div className="overflow-x-auto" style={{ maxHeight: "calc(100vh - 310px)" }}>
+            <div className="overflow-x-auto" style={{ maxHeight: "calc(100vh - 250px)" }}>
               <table className="min-w-full divide-y divide-gray-200">
                 {/* Sticky Header */}
                 <thead className="bg-blue-200 sticky top-0 z-9">
@@ -1543,16 +1101,6 @@ const renderLaborRateRow = () => (
                       <th key={item.id} className="px-3 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
                         <div className="flex items-center justify-center gap-2">
                           {item.name}
-                          <button 
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              handleRemoveItem(item.id);
-                            }}
-                            className="text-red-500 bg-blue-200 hover:text-red-700 focus:outline-none hover:border-gray-100"
-                            title="Remove Item"
-                          >
-                            <Trash2 size={14} />
-                          </button>
                         </div>
                       </th>
                     ))}
@@ -1569,13 +1117,7 @@ const renderLaborRateRow = () => (
                     </td>
                     {items.map((item) => (
                       <td key={item.id} className="px-3 py-2 text-center">
-                        <input
-                          type="number"
-                          value={itemQuantities[item.id] || 0}
-                          onChange={(e) => handleItemQuantityChange(item.id, e.target.value)}
-                          className="w-12 bg-white text-center border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
-                          min="0"
-                        />
+                          {itemQuantities[item.id] || 0}
                       </td>
                     ))}
                     <td className="px-3 py-2 text-center font-medium">
@@ -1612,16 +1154,6 @@ const renderLaborRateRow = () => (
                           <td className="px-3 py-2 text-sm text-gray-500">
                             <div className="flex items-center">
                               {material.name}
-                              <button 
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  handleRemoveMaterial(section.id, material.id);
-                                }}
-                                className="ml-2 bg-white text-red-500 hover:text-red-700 hover:border-white focus:outline-none"
-                                title="Remove Material"
-                              >
-                                <Trash2 size={14} />
-                              </button>
                             </div>
                           </td>
                           <td className="px-3 py-2 text-sm text-gray-500">
@@ -1640,25 +1172,11 @@ const renderLaborRateRow = () => (
                             {material.marketPrice}
                           </td>
                           <td className="px-3 py-2 text-sm text-gray-500">
-                            <input
-                              type="number"
-                              value={material.unitPrice}
-                              onChange={(e) => handleMaterialDataChange(section.id, material.id, 'unitPrice', parseFloat(e.target.value) || 0)}
-                              className="w-20 bg-white border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
-                              min="0"
-                            />
+                              {material.unitPrice}
                           </td>
                           <td className="px-3 py-2 text-sm text-gray-500">
                             <div className="flex items-center">
-                              <input
-                                type="number"
-                                value={material.discount}
-                                onChange={(e) => handleMaterialDataChange(section.id, material.id, 'discount', parseFloat(e.target.value) || 0)}
-                                className="w-16 bg-white border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
-                                min="0"
-                                step="0.01"
-                                max="100"
-                              />
+                                {material.discount}
                               <span className="ml-1">%</span>
                             </div>
                           </td>
@@ -1667,13 +1185,7 @@ const renderLaborRateRow = () => (
                           {/* Quantity inputs for each material */}
                           {items.map((item, idx) => (
                             <td key={idx} className="px-3 py-2 text-center">
-                              <input
-                                type="number"
-                                value={material.quantities[idx] || 0}
-                                onChange={(e) => handleQuantityChange(e, idx, section.id, material.id)}
-                                className="w-12 bg-white text-center border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
-                                min="0"
-                              />
+                                {material.quantities[idx] || 0}
                             </td>
                           ))}
                           
@@ -1739,7 +1251,6 @@ const renderLaborRateRow = () => (
               </table>
             </div>
           </div>
-          {ExportButton()}
         </div>
       </div>
 
@@ -1749,36 +1260,6 @@ const renderLaborRateRow = () => (
         activities={recentActivities}
         onClose={closeActivitiesPanel}
       />
-
-      {/* Material Add Modal */}
-      {showItemModel && (
-        <NewItemAddModel
-          isOpen={showItemModel}
-          onClose={() => setShowItemModel(false)}
-          onSave={createItem}
-        />
-      )}
-      
-      {/* Item Add Modal */}
-      {showMaterialModel && (
-        <NewMaterialAddModel
-          isOpen={showMaterialModel}
-          onClose={() => setShowMaterialModel(false)}
-          onSave={createMaterial}  // This now expects the full item data object
-          sections={sections}
-        />
-      )}
-
-      {/* Confirm Modal for delete actions */}
-      {showConfirmModal && (
-        <ConfirmModal
-          isOpen={showConfirmModal}
-          onClose={() => setShowConfirmModal(false)}
-          onConfirm={handleConfirm}
-          message={confirmMessage}
-          title={confirmAction === 'removeMaterial' ? 'Remove Item' : 'Remove Material'}
-        />
-      )}
       
       {/* Overlay when mobile sidebar is open */}
       {isMobile && showSidebar && (
@@ -1791,4 +1272,4 @@ const renderLaborRateRow = () => (
   );
 };
 
-export default AddCostEstimationPage;
+export default CostEstimationViewPage;

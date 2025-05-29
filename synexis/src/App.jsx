@@ -24,6 +24,7 @@ import InquiryViewPage from "./pages/InquiryView";
 import AddInquiriesPage from "./pages/AddInquiry";
 import CostEstimationPage from "./pages/CostEstimations";
 import AddCostEstimationPage from "./pages/AddCostEstimation";
+import CostEstimationViewPage from "./pages/CostEstimationView";
 
 function App() {
 
@@ -70,6 +71,7 @@ function App() {
           <Route path="/estimation/addCostEstimation/:inquiryId" element={<AddCostEstimationPage/>} />
           <Route path="/estimation/costEstimation/:inquiryId" element={<CostEstimationPage/>} />
           <Route path="/estimation/editCostEstimation/:inquiryId/:id" element={<AddCostEstimationPage/>} />
+          <Route path="/estimation/costEstimationView/:inquiryId/:id" element={<CostEstimationViewPage/>} />
         </Routes>
       </NotificationProvider>
     </Router>
