@@ -218,7 +218,7 @@ const CustomerPage = () => {
           <MdDelete size={isMobile ? 16 : 18} />
         </div>
         <Link 
-          to={`/customerView/${params.id}`} 
+          to={`/people/customerView/${params.id}`} 
           state={{ selectedCustomerId: params.id }}
         >
           <div 

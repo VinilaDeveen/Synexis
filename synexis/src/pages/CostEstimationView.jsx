@@ -10,6 +10,7 @@ import {
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { Search, Menu, ChevronDown, ChevronRight } from 'lucide-react';
+import { IoChevronBackOutline } from "react-icons/io5";
 import { LuHistory } from "react-icons/lu";
 import { ToastContainer } from 'react-toastify';
 import { useNotification } from '../hooks/useNotification';
@@ -1075,6 +1076,15 @@ const renderLaborRateRow = () => (
                   onChange={(e) => setSearchTerm(e.target.value)}
                 />
               </div>
+            </div>
+            <div className='absolute mt-[85px] mr-[25px] top-0 right-0'>
+              <button
+                onClick={handleCancel}
+                className= "bg-[#3C50E0] hover:bg-blue-700 text-white pl-1 pr-3 py-2 text-sm rounded-lg flex items-center justify-center gap-1 focus:outline-none"
+              >
+                <IoChevronBackOutline size={18} className='' />
+                Back
+              </button>
             </div>
           </div>
 

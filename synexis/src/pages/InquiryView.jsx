@@ -154,7 +154,7 @@ const InquiryViewPage = () => {
 
   // Handle inquiry selection and update URL
   const handleInquirySelect = (inquiry) => {
-    navigate(`/inquiryView/${inquiry.inquiryId}`, { 
+    navigate(`/estimation/inquiryView/${inquiry.inquiryId}`, { 
       state: { selectedInquiryId: inquiry.inquiryId },
       replace: true 
     });
@@ -177,11 +177,11 @@ const InquiryViewPage = () => {
 
   // Handle back to inquiries
   const handleBackToInquiries = () => {
-    navigate('/inquiry');
+    navigate('/estimation/inquiry');
   };
 
   const handleEditInquiry = () => {
-    navigate(`/editinquiry/${selectedInquiryId}`);
+    navigate(`/estimation/editinquiry/${selectedInquiryId}`);
   };
 
   const handleDeleteInquiry = async () => {

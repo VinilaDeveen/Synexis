@@ -191,7 +191,7 @@ const CategoryView = () => {
 
   // Handle category selection and update URL
   const handleCategorySelect = (category) => {
-    navigate(`/categoryView/${category.categoryId}`, { 
+    navigate(`/inventory/categoryView/${category.categoryId}`, { 
       state: { selectedCategoryId: category.categoryId },
       replace: true 
     });
@@ -292,11 +292,11 @@ const CategoryView = () => {
 
   // Handle back to categories
   const handleBackToCategories = () => {
-    navigate('/category');
+    navigate('/inventory/category');
   };
 
   const handleEditToCategory = () => {
-    navigate(`/editCategory/${selectedCategoryId}`);
+    navigate(`/inventory/editCategory/${selectedCategoryId}`);
   };
 
   const handleDeleteCategory = async () => {
@@ -308,7 +308,7 @@ const CategoryView = () => {
       notifySuccess(`Category "${selectedCategory.mainCategoryName ? selectedCategory.mainCategoryName : selectedCategory.categoryName}" successfully deleted`);
       
       // After deletion, navigate back to categories list
-      navigate('/category');
+      navigate('/inventory/category');
     } catch (error) {
       notifyError(`Error deleting category: ${error.message || 'Unknown error'}`);
     } finally {

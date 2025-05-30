@@ -583,7 +583,7 @@ const [markupsInitialized, setMarkupsInitialized] = useState(false);
         onClick={handleExportToBackend}
         className="bg-[#3C50E0] text-white px-6 py-2 rounded mr-4 hover:bg-blue-700 disabled:bg-[ #3C50E0]"
       >
-        {submitting ? <ButtonLoader text={isEditMode ? "Updating..." : "Submitting..."} /> : isEditMode ? 'Update' : 'Submit'}
+        {submitting ? <ButtonLoader text={"Submitting..."} /> : 'Submit'}
       </button>
       <button 
         disabled={drafting}

@@ -165,7 +165,7 @@ const InquiryPage = () => {
   };
 
   const handleEditInquiry = (id) => {
-    navigate(`/editinquiry/${id}`);
+    navigate(`/estimation/editinquiry/${id}`);
     notifyDefault(`Editing inquiry #${id}`);
   };
 
@@ -239,7 +239,7 @@ const InquiryPage = () => {
           <MdDelete size={isMobile ? 16 : 18} />
         </div>
         <Link 
-          to={`/inquiryView/${params.id}`} 
+          to={`/estimation/inquiryView/${params.id}`} 
           state={{ selectedInquiryId: params.id }}
         >
           <div 

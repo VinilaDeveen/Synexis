@@ -79,6 +79,7 @@ function MaterialView() {
 
   const [activityLogs, setActivityLogs] = useState([]);
   const [activityLogLoading, setActivityLogLoading] = useState(false);
+  const isEnableToUse = selectedMaterial.materialForUse;
 
   // Add this useEffect to fetch activity logs
   useEffect(() => {
@@ -137,6 +138,7 @@ function MaterialView() {
         const response = await materialService.getById(id);
         if (response && response.data) {
           setSelectedMaterial(response.data);
+          console.log(response.data);
         } else {
           notifyWarning('Material not found');
         }
@@ -191,7 +193,7 @@ function MaterialView() {
 
   // Handle material selection and update URL
   const handleMaterialSelect = (material) => {
-    navigate(`/materialView/${material.materialId}`, { 
+    navigate(`/inventory/materialView/${material.materialId}`, { 
       state: { selectedMaterialId: material.materialId },
       replace: true 
     });
@@ -210,11 +212,11 @@ function MaterialView() {
 
   // Handle back to inventory
   const handleBackToInventory = () => {
-    navigate('/material');
+    navigate('/inventory/material');
   };
 
   const handleEditMaterial = () => {
-    navigate(`/editMaterial/${selectedMaterialId}`);
+    navigate(`/inventory/editMaterial/${selectedMaterialId}`);
   };
 
   const handleDeleteMaterial = async () => {
@@ -226,7 +228,7 @@ function MaterialView() {
       notifySuccess(`Material "${selectedMaterial.name}" successfully deleted`);
       
       // After deletion, navigate back to inventory list
-      navigate('/material');
+      navigate('/inventory/material');
     } catch (error) {
       notifyError(`Error deleting material: ${error.message || 'Unknown error'}`);
     } finally {
@@ -320,12 +322,12 @@ function MaterialView() {
           </div>
           
           {/* Content Area */}
-          <div className="flex-1 px-4 overflow-hidden">
+          <div className="flex-1 p-6 overflow-hidden">
             {selectedMaterial ? (
               <div className="w-full">
                 <div className="flex justify-between items-center mb-4">
                   <h1 className="text-xl font-semibold">
-                    {selectedMaterial.name}
+                    {selectedMaterial.materialName}
                   </h1>
                   <div className="flex gap-4 text-[#3B50DF]">
                     <div 
@@ -489,7 +491,7 @@ function MaterialView() {
                                     </div>
                                     <div className="flex">
                                       <span className="w-32 text-gray-400">Quantity In Hand</span>
-                                      <span className="w-64">{selectedMaterial.quantityInHand || 'Not specified'}</span>
+                                      <span className="w-64">{selectedMaterial.quantityInHand}</span>
                                     </div>
                                   </div>
                                   <div className="flex">
@@ -509,7 +511,7 @@ function MaterialView() {
                                     </div>
                                     <div className="flex">
                                       <span className="w-32 text-gray-400">Material Use</span>
-                                      <span className="w-64">{selectedMaterial.materialForUse === 'true' ? "Disable" : "Enable"}</span>
+                                      <span className="w-64">{isEnableToUse ? "Enable" : "Disable"}</span>
                                     </div>
                                   </div>
                                 </div>

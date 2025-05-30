@@ -30,11 +30,12 @@ const NewMaterialAddModal = ({ isOpen, onClose, onSave, sections }) => {
   };
 
   useEffect(() => {
-    if (searchTerm.trim() === '') {
+    /*if (searchTerm.trim() === '') {
       setSuggestions([]);
       return;
-    }
+    }*/
 
+      if (!showSuggestions) return;
     const fetchSuggestions = async () => {
       setIsLoading(true);
       try {
@@ -51,7 +52,7 @@ const NewMaterialAddModal = ({ isOpen, onClose, onSave, sections }) => {
 
     const debounceTimer = setTimeout(fetchSuggestions, 300);
     return () => clearTimeout(debounceTimer);
-  }, [searchTerm]);
+  }, [searchTerm, showSuggestions ]);
 
   const handleSuggestionClick = (material) => {
     setSearchTerm(material.materialName);
@@ -125,7 +126,7 @@ const NewMaterialAddModal = ({ isOpen, onClose, onSave, sections }) => {
               resetForm();
               onClose();
             }}
-            className="text-gray-400 hover:text-gray-600"
+            className="text-gray-400 bg-white hover:text-gray-600 hover:border-white"
           >
             <X size={20} />
           </button>
@@ -148,7 +149,8 @@ const NewMaterialAddModal = ({ isOpen, onClose, onSave, sections }) => {
                   setSearchTerm(e.target.value);
                   setShowSuggestions(true);
                 }}
-                onFocus={() => setShowSuggestions(true)}
+                autoComplete="off"
+                onFocus={() => {setShowSuggestions(true);}}
                 className="w-full pl-10 bg-white p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                 placeholder="Search material..."
               />
@@ -160,7 +162,7 @@ const NewMaterialAddModal = ({ isOpen, onClose, onSave, sections }) => {
             </div>
             
             {showSuggestions && suggestions.length > 0 && (
-              <div className="absolute z-10 mt-1 w-full max-w-md bg-white shadow-lg rounded-md border border-gray-200 max-h-60 overflow-auto">
+              <div className="absolute z-10 mt-1 w-[400px] max-w-md bg-white shadow-lg rounded-md border border-gray-200 max-h-60 overflow-auto">
                 {suggestions.map((material, index) => (
                   <div
                     key={index}

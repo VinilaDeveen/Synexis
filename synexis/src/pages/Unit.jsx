@@ -167,15 +167,15 @@ const UnitPage = () => {
   const handleAddUnit = () => {
     notifySuccess('Add unit dialog opened');
     // Navigate to add unit page
-    navigate('/addunit');
+    navigate('/inventory/addunit');
   };
 
   const handleEditUnit = (id) => {
-    navigate(`/editunit/${id}`);
+    navigate(`/inventory/editunit/${id}`);
   };
 
   const handleViewUnit = (id) => {
-    navigate(`/unitView/${id}`, { state: { selectedUnitId: id } });
+    navigate(`/inventory/unitView/${id}`, { state: { selectedUnitId: id } });
   };
 
   const handleDeleteUnit = async (id) => {

@@ -27,7 +27,7 @@ const NewItemAddModal = ({ isOpen, onClose, onSave }) => {
           <h2 className="text-xl font-semibold">Add New Item</h2>
           <button 
             onClick={onClose}
-            className="text-gray-400 bg-white hover:text-gray-600"
+            className="text-gray-400 bg-white hover:text-gray-600 hover:border-white"
           >
             <X size={20} />
           </button>
@@ -44,6 +44,7 @@ const NewItemAddModal = ({ isOpen, onClose, onSave }) => {
               value={itemName}
               onChange={(e) => setItemName(e.target.value)}
               className="w-full bg-white p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              autoComplete="off"
               placeholder="Enter item name"
             />
             {error && (

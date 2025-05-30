@@ -154,7 +154,7 @@ const UnitView = () => {
 
   // Handle unit selection and update URL
   const handleUnitSelect = (unit) => {
-    navigate(`/unitView/${unit.unitId}`, { 
+    navigate(`/inventory/unitView/${unit.unitId}`, { 
       state: { selectedUnitId: unit.unitId },
       replace: true 
     });
@@ -173,11 +173,11 @@ const UnitView = () => {
 
   // Handle back to units
   const handleBackToUnits = () => {
-    navigate('/unit');
+    navigate('/inventory/unit');
   };
 
   const handleEditUnit = () => {
-    navigate(`/editUnit/${selectedUnitId}`);
+    navigate(`/inventory/editUnit/${selectedUnitId}`);
   };
 
   const handleDeleteUnit = async () => {
