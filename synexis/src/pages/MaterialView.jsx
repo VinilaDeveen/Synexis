@@ -79,7 +79,6 @@ function MaterialView() {
 
   const [activityLogs, setActivityLogs] = useState([]);
   const [activityLogLoading, setActivityLogLoading] = useState(false);
-  const isEnableToUse = selectedMaterial.materialForUse;
 
   // Add this useEffect to fetch activity logs
   useEffect(() => {
@@ -360,7 +359,7 @@ function MaterialView() {
                     <ContentLoader />
                   </div>
                 ) : (
-                  <div className="p-6 bg-white rounded-lg shadow overflow-hidden">
+                  <div className="bg-white rounded-lg shadow overflow-hidden">
                     {/* Tabs */}
                     <div className="flex">
                       <button 
@@ -382,7 +381,6 @@ function MaterialView() {
                         Activity Log
                       </button>
                     </div>
-                    <hr className='mt-2 mb-3' />
                     {/* Tab Content */}
                     <div className="p-6">
                       {activeTab === 'overview' ? (
@@ -511,7 +509,7 @@ function MaterialView() {
                                     </div>
                                     <div className="flex">
                                       <span className="w-32 text-gray-400">Material Use</span>
-                                      <span className="w-64">{isEnableToUse ? "Enable" : "Disable"}</span>
+                                      <span className="w-64">{selectedMaterial.materialForUse ? "Enable" : "Disable"}</span>
                                     </div>
                                   </div>
                                 </div>

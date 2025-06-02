@@ -26,6 +26,8 @@ import CostEstimationPage from "./pages/CostEstimations";
 import AddCostEstimationPage from "./pages/AddCostEstimation";
 import CostEstimationViewPage from "./pages/CostEstimationView";
 import AddCostEstimationNewVersionPage from "./pages/AddCostEstimationNewVersion";
+import LoginPage from "./pages/LoginPage";
+import AppFlow from "./pages/AppFlow";
 
 function App() {
 
@@ -34,6 +36,8 @@ function App() {
       <NotificationProvider>
         <Notifications />
         <Routes>
+          <Route path="/" element={<AppFlow />} />
+
           <Route path="/inventory/category" element={<CategoryPage />} />
           <Route path="/inventory/addcategory" element={<AddCategoryPage />} />
           <Route path="/inventory/editCategory/:id" element={<AddCategoryPage />} />
