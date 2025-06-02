@@ -195,7 +195,7 @@ function EmployeeView() {
 
   // Handle employee selection and update URL
   const handleEmployeeSelect = (employee) => {
-    navigate(`/employeeView/${employee.employeeId}`, { 
+    navigate(`/people/employeeView/${employee.employeeId}`, { 
       state: { selectedEmployeeId: employee.employeeId },
       replace: true 
     });
@@ -213,74 +213,14 @@ function EmployeeView() {
         employee.role?.toLowerCase().includes(searchTerm.toLowerCase())
       );
 
-  // Get assignment columns for DataGrid
-  const getAssignmentColumns = () => {
-    // Base columns
-    const columns = [
-      { 
-        field: 'name', 
-        headerName: 'Project Name', 
-        flex: 1,
-        minWidth: 180,
-        renderCell: (params) => (
-          <div className="flex items-center mt-2">
-            <div className={`w-2 h-2 rounded-full mr-2 ${params.row.isActive ? 'bg-green-500' : 'bg-red-500'}`}></div>
-            <div className="text-sm font-medium text-gray-900">{params.row.name}</div>
-          </div>
-        ),
-        headerAlign: 'left',
-        align: 'left',
-        headerClassName: 'name-column-header',
-      },
-      { 
-        field: 'role', 
-        headerName: 'Role', 
-        flex: 0.7,
-        minWidth: 120,
-        headerAlign: 'left',
-        align: 'left'
-      },
-    ];
-    
-    // Add additional columns for larger screens
-    if (!isMobile) {
-      columns.push(
-        { 
-          field: 'startDate', 
-          headerName: 'Start Date', 
-          flex: 0.8,
-          minWidth: 120,
-          headerAlign: 'left',
-          align: 'left'
-        },
-        { 
-          field: 'endDate', 
-          headerName: 'End Date', 
-          flex: 0.8,
-          minWidth: 120,
-          headerAlign: 'left',
-          align: 'left'
-        },
-        { 
-          field: 'status', 
-          headerName: 'Status', 
-          flex: 0.6,
-          minWidth: 100,
-          headerAlign: 'left',
-          align: 'left'
-        }
-      );
-    }
-    return columns;
-  };
 
   // Handle back to employees
   const handleBackToEmployees = () => {
-    navigate('/employee');
+    navigate('/people/employee');
   };
 
   const handleEditEmployee = () => {
-    navigate(`/editEmployee/${selectedEmployeeId}`);
+    navigate(`/people/editEmployee/${selectedEmployeeId}`);
   };
 
   const handleDeleteEmployee = async () => {
@@ -292,7 +232,7 @@ function EmployeeView() {
       notifySuccess(`Employee "${selectedEmployee.firstName} ${selectedEmployee.lastName}" successfully deleted`);
       
       // After deletion, navigate back to employees list
-      navigate('/employee');
+      navigate('/people/employee');
     } catch (error) {
       notifyError(`Error deleting employee: ${error.message || 'Unknown error'}`);
     } finally {

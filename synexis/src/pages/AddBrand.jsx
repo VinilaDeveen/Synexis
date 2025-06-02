@@ -174,7 +174,7 @@ const AddBrandPage = () => {
         await brandService.create(formDataToSend);
       }
       // Redirect to brands list page after successful operation
-      navigate('/brand');
+      navigate('/inventory/brand');
     } catch (err) {
       console.error('Error saving brand:', err);
       isEditMode
@@ -186,7 +186,7 @@ const AddBrandPage = () => {
   };
   
   const handleCancel = () => {
-    navigate('/brand');
+    navigate('/inventory/brand');
   };
 
   if (loading && isEditMode) {

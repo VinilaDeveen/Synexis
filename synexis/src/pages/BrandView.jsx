@@ -207,7 +207,7 @@ function BrandView() {
 
   // Handle brand selection and update URL
   const handleBrandSelect = (brand) => {
-    navigate(`/brandView/${brand.brandId}`, { 
+    navigate(`/inventory/brandView/${brand.brandId}`, { 
       state: { selectedBrandId: brand.brandId },
       replace: true 
     });
@@ -299,11 +299,11 @@ function BrandView() {
 
   // Handle back to categories
   const handleBackToBrands = () => {
-    navigate('/brand');
+    navigate('/inventory/brand');
   };
 
   const handleEditToBrand = () => {
-    navigate(`/editBrand/${selectedBrandId}`);
+    navigate(`/inventory/editBrand/${selectedBrandId}`);
   };
 
   const handleDeleteBrand = async () => {
@@ -315,7 +315,7 @@ function BrandView() {
         notifySuccess(`Brand "${ selectedBrand.brand }" successfully deleted`);
         
         // After deletion, navigate back to categories list
-        navigate('/brand');
+        navigate('/inventory/brand');
       } catch (error) {
         notifyError(`Error deleting brand: ${error.message || 'Unknown error'}`);
       } finally {

@@ -155,7 +155,7 @@ const CustomerView = () => {
 
   // Handle customer selection and update URL
   const handleCustomerSelect = (customer) => {
-    navigate(`/customerView/${customer.customerId}`, { 
+    navigate(`/people/customerView/${customer.customerId}`, { 
       state: { selectedCustomerId: customer.customerId },
       replace: true 
     });
@@ -176,11 +176,11 @@ const CustomerView = () => {
 
   // Handle back to customers
   const handleBackToCustomers = () => {
-    navigate('/customer');
+    navigate('/people/customer');
   };
 
   const handleEditToCustomer = () => {
-    navigate(`/editcustomer/${selectedCustomerId}`);
+    navigate(`/people/editcustomer/${selectedCustomerId}`);
   };
 
   const handleDeleteCustomer = async () => {
@@ -192,7 +192,7 @@ const CustomerView = () => {
       notifySuccess(`Customer "${selectedCustomer.customerFirstName} ${selectedCustomer.customerLastName}" successfully deleted`);
       
       // After deletion, navigate back to customers list
-      navigate('/customer');
+      navigate('/people/customer');
     } catch (error) {
       notifyError(`Error deleting customer: ${error.message || 'Unknown error'}`);
     } finally {
@@ -426,7 +426,7 @@ const CustomerView = () => {
                                 <div className="flex items-center justify-between mb-2">
                                   <div className="flex items-center">
                                     <FileText className="w-5 h-5 text-blue-500 mr-2" />
-                                    <span className="font-medium">Business Registration Certificate (BRC)</span>
+                                    <span className="font-medium">Business Registration Certificate</span>
                                   </div>
                                 </div>
                                 {selectedCustomer.brcdocUrl ? (

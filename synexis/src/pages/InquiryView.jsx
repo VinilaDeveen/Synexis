@@ -4,27 +4,29 @@ import {
   FullPageLoader, 
   InlineLoader, 
   ButtonLoader,
-  ContentLoader, 
-  ImageLoader
+  ContentLoader 
 } from '../components/loaders';
 import { useState, useEffect, useRef } from 'react';
 import { Menu, Search } from 'lucide-react';
 import { FaEdit } from "react-icons/fa";
 import { MdDelete, MdOutlineClose } from "react-icons/md";
 import { useLocation, useParams, useNavigate } from 'react-router-dom';
+import { inquiryService } from '../services/inquiryService';
 import { ToastContainer } from 'react-toastify';
 import { useNotification } from '../hooks/useNotification';
-import { unitService } from '../services/unitService';
 
-const UnitView = () => {
+const InquiryViewPage = () => {
   const { notifySuccess, notifyError, notifyWarning, notifyDefault } = useNotification();
+  const [activityLogs, setActivityLogs] = useState([]);
+  const [activityLogLoading, setActivityLogLoading] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [showSidebar, setShowSidebar] = useState(true);
   const [isMobile, setIsMobile] = useState(false);
-  const [selectedUnit, setSelectedUnit] = useState(null);
+  const [selectedInquiry, setSelectedInquiry] = useState(null);
   const [activeTab, setActiveTab] = useState('overview');
+
   const [loading, setLoading] = useState(false);
-  const [unitLoading, setUnitLoading] = useState(false);
+  const [inquiryLoading, setInquiryLoading] = useState(false);
   const isInitialLoad = useRef(true);
   const isInitialLoad1 = useRef(true);
   
@@ -33,94 +35,92 @@ const UnitView = () => {
   const location = useLocation();
   const navigate = useNavigate();
   
-  // Get the selectedUnitId from state or from URL parameter
-  const selectedUnitId = location.state?.selectedUnitId || id;
+  // Get the selectedInquiryId from state or from URL parameter
+  const selectedInquiryId = location.state?.selectedInquiryId || id;
 
-  // State for units
-  const [units, setUnits] = useState([]);
-
-  const [activityLogs, setActivityLogs] = useState([]);
-  const [activityLogLoading, setActivityLogLoading] = useState(false);
+  // State for inquiries
+  const [inquiries, setInquiries] = useState([]);
 
   // Add this useEffect to fetch activity logs
-  useEffect(() => {
-    const fetchActivityLogs = async () => {
-      if (!selectedUnitId) return;
-      
-      try {
-        setActivityLogLoading(true);
-        const response = await unitService.getUnitActivityLogs(selectedUnitId);
+    useEffect(() => {
+      const fetchActivityLogs = async () => {
+        if (!selectedInquiryId) return;
         
-        if (response && response.data) {
-          setActivityLogs(response.data);
+        try {
+          setActivityLogLoading(true);
+          const response = await inquiryService.getInquiryActivityLogs(selectedInquiryId);
+          
+          if (response && response.data) {
+            setActivityLogs(response.data);
+          }
+        } catch (error) {
+          console.error('Error fetching activity logs:', error);
+          notifyError('Failed to load activity logs');
+        } finally {
+          setActivityLogLoading(false);
         }
-      } catch (error) {
-        console.error('Error fetching activity logs:', error);
-        notifyError('Failed to load activity logs');
-      } finally {
-        setActivityLogLoading(false);
+      };
+      
+      // Only fetch logs when activity tab is active and we have a unit selected
+      if (activeTab === 'activity' && selectedInquiryId) {
+        fetchActivityLogs();
       }
-    };
-    
-    // Only fetch logs when activity tab is active and we have a unit selected
-    if (activeTab === 'activity' && selectedUnitId) {
-      fetchActivityLogs();
-    }
-  }, [selectedUnitId, activeTab]);
-  // Fetch units list data
+    }, [selectedInquiryId, activeTab]);
+  
+  // Fetch inquiries list data
   useEffect(() => {
-    const fetchUnits = async () => {
+    const fetchInquiries = async () => {
       try {
         setLoading(true);
-        const response = await unitService.getSideDrop();
+        const response = await inquiryService.getSideDrop();
         if (response && response.data) {
-          setUnits(response.data);
+          setInquiries(response.data);
         }
       } catch (error) {
         if (isInitialLoad.current) {
-          console.error('Error fetching units:', error);
-          notifyError('Failed to load units');
-          isInitialLoad.current = false;
+          console.error('Error fetching inquiries:', error);
+          notifyError('Failed to load inquiries');
+          isInitialLoad.current = false
         }
       } finally {
         setLoading(false);
       }
     };
 
-    fetchUnits();
+    fetchInquiries();
   }, []);
 
-  // Fetch selected unit by ID when selectedUnitId changes
+  // Fetch selected inquiry by ID when selectedInquiryId changes
   useEffect(() => {
-    const fetchUnitById = async (id) => {
+    const fetchInquiryById = async (id) => {
       if (!id) return;
       
       try {
-        setUnitLoading(true);
-        const response = await unitService.getById(id);
+        setInquiryLoading(true);
+        const response = await inquiryService.getById(id);
         if (response && response.data) {
-          setSelectedUnit(response.data);
+          setSelectedInquiry(response.data);
         } else {
-          notifyWarning('Unit not found');
+          notifyWarning('Inquiry not found');
         }
       } catch (error) {
         if (isInitialLoad1.current) {
-          console.error('Error fetching unit details:', error);
-          notifyError('Failed to load unit details');
+          console.error('Error fetching inquiry details:', error);
+          notifyError('Failed to load inquiry details');
           isInitialLoad1.current = false;
         }
       } finally {
-        setUnitLoading(false);
+        setInquiryLoading(false);
       }
     };
 
-    if (selectedUnitId) {
-      fetchUnitById(selectedUnitId);
-    } else if (units.length > 0 && !selectedUnit) {
-      // Default to first unit if none selected
-      handleUnitSelect(units[0]);
+    if (selectedInquiryId) {
+      fetchInquiryById(selectedInquiryId);
+    } else if (inquiries.length > 0 && !selectedInquiry) {
+      // Default to first inquiry if none selected
+      handleInquirySelect(inquiries[0]);
     }
-  }, [selectedUnitId, units]);
+  }, [selectedInquiryId, inquiries]);
 
   // Check screen size and set mobile state
   useEffect(() => {
@@ -152,48 +152,66 @@ const UnitView = () => {
     setSearchTerm(e.target.value);
   };
 
-  // Handle unit selection and update URL
-  const handleUnitSelect = (unit) => {
-    navigate(`/inventory/unitView/${unit.unitId}`, { 
-      state: { selectedUnitId: unit.unitId },
+  // Handle inquiry selection and update URL
+  const handleInquirySelect = (inquiry) => {
+    navigate(`/estimation/inquiryView/${inquiry.inquiryId}`, { 
+      state: { selectedInquiryId: inquiry.inquiryId },
       replace: true 
     });
-    // The useEffect hook with selectedUnitId dependency will trigger
-    // the API call to fetch the unit details
+    // The useEffect hook with selectedInquiryId dependency will trigger
+    // the API call to fetch the inquiry details
   };
 
-  // Filter units based on search term
-  const filteredUnits = searchTerm.trim() === '' 
-    ? units 
-    : units.filter(unit => 
-        unit.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        unit.shortName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        unit.unitId?.toString().toLowerCase().includes(searchTerm.toLowerCase())
+  // Filter inquiries based on search term
+  const filteredInquiries = searchTerm.trim() === '' 
+    ? inquiries 
+    : inquiries.filter(inquiry => 
+        inquiry.projectName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        inquiry.customer?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        inquiry.inquiryType?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        inquiry.projectType?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        inquiry.salesPerson?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        inquiry.inquiryId?.toString().includes(searchTerm)
       );
 
-  // Handle back to units
-  const handleBackToUnits = () => {
-    navigate('/inventory/unit');
+
+  // Handle back to inquiries
+  const handleBackToInquiries = () => {
+    navigate('/estimation/inquiry');
   };
 
-  const handleEditUnit = () => {
-    navigate(`/inventory/editUnit/${selectedUnitId}`);
+  const handleEditInquiry = () => {
+    navigate(`/estimation/editinquiry/${selectedInquiryId}`);
   };
 
-  const handleDeleteUnit = async () => {
-    if (!selectedUnitId) return;
+  const handleDeleteInquiry = async () => {
+    if (!selectedInquiryId) return;
 
     try {
       setLoading(true);
-      await unitService.delete(selectedUnitId);
-      notifySuccess(`Unit "${selectedUnit.unitName}" successfully deleted`);
+      await inquiryService.delete(selectedInquiryId);
+      notifySuccess(`Inquiry "${selectedInquiry.projectName}" successfully deleted`);
       
-      // After deletion, navigate back to units list
-      navigate('unit');
+      // After deletion, navigate back to inquiries list
+      navigate('/inquiry');
     } catch (error) {
-      notifyError(`Error deleting unit: ${error.message || 'Unknown error'}`);
+      notifyError(`Error deleting inquiry: ${error.message || 'Unknown error'}`);
     } finally {
       setLoading(false);
+    }
+  };
+
+  // Get inquiry status color
+  const getStatusColor = (status) => {
+    switch(status?.toLowerCase()) {
+      case 'pending':
+        return 'bg-yellow-100 text-yellow-800';
+      case 'active':
+        return 'bg-green-100 text-green-800';
+      case 'inactive':
+        return 'bg-red-200 text-red-800';
+      default:
+        return 'bg-gray-100 text-gray-800';
     }
   };
 
@@ -231,7 +249,7 @@ const UnitView = () => {
         </div>
 
         <div className="flex flex-1 mt-1 overflow-hidden">
-          {/* Unit Name Panel */}
+          {/* Inquiry List Panel */}
           <div className="w-[300px] h-full shadow-md bg-white flex flex-col">
             <div className="p-4 relative">
               <div className="absolute inset-y-0 left-4 flex items-center pointer-events-none">
@@ -246,30 +264,33 @@ const UnitView = () => {
               />
             </div>
 
-            {/* Unit List */}
+            {/* Inquiry List */}
             <div className="flex-1 overflow-y-auto p-2">
               {loading ? (
                 <div className='flex justify-center items-center h-32'>
                   <InlineLoader/>
                 </div>
-              ) : filteredUnits.length > 0 ? (
-                filteredUnits.map((unit) => (
+              ) : filteredInquiries.length > 0 ? (
+                filteredInquiries.map((inquiry) => (
                   <div 
-                    key={unit.unitId}
-                    onClick={() => handleUnitSelect(unit)}
-                    className={`p-2 mb-2 cursor-pointer ${selectedUnitId == unit.unitId ? 'bg-blue-100' : 'hover:bg-gray-100'}`}
+                    key={inquiry.inquiryId}
+                    onClick={() => handleInquirySelect(inquiry)}
+                    className={`p-3 mb-2 cursor-pointer rounded-lg ${selectedInquiryId == inquiry.inquiryId ? 'bg-blue-100' : 'hover:bg-gray-100'}`}
                   >
-                    <div className="flex items-center">
-                      <span className="text-sm font-medium">{unit.unitName}</span>
-                      {unit.unitShortName && (
-                        <span className="ml-2 text-xs text-gray-500">({unit.unitShortName})</span>
-                      )}
+                    <div className="flex flex-col">
+                      <span className="font-medium text-sm">{inquiry.projectName}</span>
+                      <span className="text-xs text-gray-500">({inquiry.quotationNumber})</span>
+                      <div className="mt-1">
+                        <span className="bg-[#3119C3] text-white text-xs px-2 py-1 rounded-md">
+                          {inquiry.inquiryType}
+                        </span>
+                      </div>
                     </div>
                   </div>
                 ))
               ) : (
                 <div className="p-4 text-center text-gray-500">
-                  No units found
+                  No inquiries found
                 </div>
               )}
             </div>
@@ -277,39 +298,39 @@ const UnitView = () => {
 
           {/* Content Area */}
           <div className="flex-1 p-6 overflow-auto">
-            {selectedUnit ? (
+            {selectedInquiry ? (
               <div className="w-full">
                 <div className="flex justify-between items-center mb-4">
                   <h1 className="text-xl font-semibold">
-                    {selectedUnit.unitName}
+                    {selectedInquiry.projectName}
                   </h1>
                   <div className="flex text-[#3B50DF]">
                     <div 
                       className="bg-gray-100 rounded cursor-pointer p-2" 
-                      title="Edit Unit"
-                      onClick={handleEditUnit}
+                      title="Edit Inquiry"
+                      onClick={handleEditInquiry}
                     >
                       <FaEdit size={18}/>
                     </div>
                     <div 
                       className="bg-gray-100 rounded cursor-pointer p-2" 
-                      title="Delete Unit"
-                      onClick={handleDeleteUnit}
+                      title="Delete Inquiry"
+                      onClick={handleDeleteInquiry}
                     >
                       <MdDelete size={18} />
                     </div>
                     <div 
                       className="bg-gray-100 rounded cursor-pointer p-2" 
-                      title="Close/Back to Units"
-                      onClick={handleBackToUnits}
+                      title="Close/Back to Inquiries"
+                      onClick={handleBackToInquiries}
                     >
                       <MdOutlineClose size={18} />
                     </div>
                   </div>
                 </div>
 
-                {/* Unit Content with Loading State */}
-                {unitLoading ? (
+                {/* Inquiry Content with Loading State */}
+                {inquiryLoading ? (
                   <ContentLoader/>
                 ) : (
                   <div className="bg-white rounded-lg shadow overflow-hidden">
@@ -330,56 +351,62 @@ const UnitView = () => {
                     </div>
 
                     {/* Tab Content */}
-                    <div className="p-4">
+                    <div className="p-6">
                       {activeTab === 'overview' ? (
-                        <div className="max-h-[calc(100vh-280px)] overflow-y-auto" style={{
-                          scrollbarWidth: 'thin',
-                          scrollbarColor: '#3B50DF #D9D9D9'
-                        }}>
+                        <div>
                           {/* General Information */}
                           <div className="mb-8">
                             <h2 className="text-lg font-medium mb-4">General Information</h2>
                             <div className="space-y-3">
                               <div className="flex">
-                                <span className="w-32 text-gray-400">Unit Name</span>
-                                <span>{selectedUnit.unitName}</span>
+                                <span className="w-32 text-gray-400">Project Name</span>
+                                <span>{selectedInquiry.projectName}</span>
                               </div>
                               <div className="flex">
-                                <span className="w-32 text-gray-400">Short Name</span>
-                                <span>{selectedUnit.unitShortName || '-'}</span>
+                                <span className="w-32 text-gray-400">Customer</span>
+                                <span>{selectedInquiry.customerName}</span>
                               </div>
                               <div className="flex">
-                                <span className="w-32 text-gray-400">Unit ID</span>
-                                <span>{selectedUnit.unitId}</span>
+                                <span className="w-32 text-gray-400">Inquiry Type</span>
+                                <span>{selectedInquiry.inquiryType}</span>
+                              </div>
+                              <div className="flex">
+                                <span className="w-32 text-gray-400">Project Type</span>
+                                <span>{selectedInquiry.projectType}</span>
+                              </div>
+                              <div className="flex">
+                                <span className="w-32 text-gray-400">Sales Person</span>
+                                <span>{selectedInquiry.salesPersonName}</span>
+                              </div>
+                              <div className="flex">
+                                <span className="w-32 text-gray-400">Estimator</span>
+                                <span>{selectedInquiry.estimatorName}</span>
+                              </div>
+                              <div className="flex">
+                                <span className="w-32 text-gray-400">Return Date</span>
+                                <span>{selectedInquiry.projectReturnDate}</span>
                               </div>
                               <div className="flex">
                                 <span className="w-32 text-gray-400">Status</span>
-                                <span>{selectedUnit.unitStatus.toLowerCase() || 'Inactive'}</span>
-                              </div>
-                              <div className="flex">
-                                <span className="w-32 text-gray-400">Allow Decimal</span>
-                                <span>{selectedUnit.unitAllowDecimal ? 'Yes' : 'No'}</span>
+                                <span className={`px-2 py-1 rounded-md text-xs ${getStatusColor(selectedInquiry.inquiryStatus)}`}>
+                                  {selectedInquiry.inquiryStatus || 'Pending'}
+                                </span>
                               </div>
                             </div>
                           </div>
-
-                          {/* Associated Materials - If available */}
-                          {selectedUnit.associatedMaterialList && selectedUnit.associatedMaterialList.length > 0 && (
-                            <div className="mb-8">
-                              <h2 className="text-lg font-medium mb-4">Associated Materials</h2>
-                              <div className="">
-                                {selectedUnit.associatedMaterialList.map((material, index) => (
-                                  <div key={`material-${index}`} className="border-b py-2 flex-1 items-center">
-                                    <div className="">{material.materialName}</div>
-                                    <div className="text-sm text-gray-500">{material.materialSKU}</div>
-                                  </div>
-                                ))}
+                          
+                          {/* Notes Section */}
+                          {selectedInquiry.notes && (
+                            <div className="mt-8">
+                              <h2 className="text-lg font-medium mb-4">Notes</h2>
+                              <div className="bg-gray-50 p-4 rounded-lg">
+                                <p className="text-gray-700">{selectedInquiry.notes}</p>
                               </div>
                             </div>
                           )}
                         </div>
                       ) : (
-                        <div className="max-h-[calc(100vh-240px)] overflow-y-auto" style={{
+                        <div className="max-h-[calc(100vh-260px)] overflow-y-auto" style={{
                           scrollbarWidth: 'thin',
                           scrollbarColor: '#3B50DF #D9D9D9'
                         }}>
@@ -414,7 +441,7 @@ const UnitView = () => {
             ) : (
               <div className="flex items-center justify-center h-full">
                 <div className="text-gray-500">
-                  {loading ? <ContentLoader/> : 'Select a unit to view details'}
+                  {loading ? <ContentLoader/> : 'Select an inquiry to view details'}
                 </div>
               </div>
             )}
@@ -434,4 +461,4 @@ const UnitView = () => {
   );
 };
 
-export default UnitView;
+export default InquiryViewPage;

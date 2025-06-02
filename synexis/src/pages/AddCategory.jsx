@@ -129,7 +129,7 @@ const AddCategoryPage = () => {
         await categoryService.create(categoryData);
       }
       // Redirect to categories list page after successful operation
-      navigate('/category');
+      navigate('/inventory/category');
     } catch (err) {
       console.error('Error saving category:', err);
       isEditMode 
@@ -142,7 +142,7 @@ const AddCategoryPage = () => {
   };
 
   const handleCancel = () => {
-    navigate('/category');
+    navigate('/inventory/category');
   };
 
   if (loading && isEditMode) {

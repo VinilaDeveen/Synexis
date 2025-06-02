@@ -235,12 +235,12 @@ const MaterialPage = () => {
   };
   
   const handleAddMaterial = () => {
-    navigate('/addMaterial');
+    navigate('/inventory/addMaterial');
     notifyDefault('Add Material page coming soon');
   };
 
   const handleEditMaterial = (id) => {
-    navigate(`/editMaterial/${id}`);
+    navigate(`/inventory/editMaterial/${id}`);
     notifyDefault(`Edit Material ID: ${id} page coming soon`);
   };
 
@@ -315,7 +315,7 @@ const MaterialPage = () => {
           <MdDelete size={isMobile ? 16 : 18} />
         </div>
         <Link 
-          to={`/materialView/${params.id}`} 
+          to={`/inventory/materialView/${params.id}`} 
           state={{ selectedMaterialId: params.id }}
         >
           <div 

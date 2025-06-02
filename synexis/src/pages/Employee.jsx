@@ -224,12 +224,12 @@ const EmployeePage = () => {
   };
   
   const handleAddEmployee = () => {
-    navigate('/addEmployee');
+    navigate('/people/addEmployee');
     notifyDefault('Add Employee page coming soon');
   };
 
   const handleEditEmployee = (id) => {
-    navigate(`/editEmployee/${id}`);
+    navigate(`/people/editEmployee/${id}`);
     notifyDefault(`Edit Employee ID: ${id} page coming soon`);
   };
 
@@ -303,7 +303,7 @@ const EmployeePage = () => {
           <MdDelete size={isMobile ? 16 : 18} />
         </div>
         <Link 
-          to={`/employeeView/${params.id}`} 
+          to={`/people/employeeView/${params.id}`} 
           state={{ selectedEmployeeId: params.id }}
         >
           <div 
