@@ -259,14 +259,6 @@ export default function Sidebar() {
                         Cost Estimations
                       </ListItem>
                     </Link>
-                    <Link to="/estimation/costEstApprove">
-                      <ListItem className={`${isActive('/estimation/cost-estimation-approvals') ? 'bg-[#3C50E0]' : 'hover:bg-[#3C50E0]'} text-white`}>
-                        <ListItemPrefix>
-                          <ChevronRightIcon strokeWidth={3} className="h-3 w-5" />
-                        </ListItemPrefix>
-                        Cost Estimation Approvals
-                      </ListItem>
-                    </Link>
                   </List>
                 </AccordionBody>
               )}
@@ -307,8 +299,8 @@ export default function Sidebar() {
               {isOpen && (open === 5 || isInPath('/project')) && (
                 <AccordionBody className="py-1 text-white">
                   <List className="p-0">
-                    <Link to="/project/jobs">
-                      <ListItem className={`${isActive('/project/jobs') ? 'bg-[#3C50E0]' : 'hover:bg-[#3C50E0]'} text-white`}>
+                    <Link to="/project/job">
+                      <ListItem className={`${isActive('/project/job') ? 'bg-[#3C50E0]' : 'hover:bg-[#3C50E0]'} text-white`}>
                         <ListItemPrefix>
                           <ChevronRightIcon strokeWidth={3} className="h-3 w-5" />
                         </ListItemPrefix>

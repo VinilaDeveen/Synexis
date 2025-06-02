@@ -11,4 +11,5 @@ export const recentActivityService = {
     getAllCustomerActivity : () => axios.get(`${API_BASE_URL}/Customer`),
     getAllInquiryActivity : () => axios.get(`${API_BASE_URL}/Inquiry`),
     getAllCostEstimationActivity : () => axios.get(`${API_BASE_URL}/CostEstimation`),
+    getAllJobActivity : () => axios.get(`${API_BASE_URL}/Job`),
 }

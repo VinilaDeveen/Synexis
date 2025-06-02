@@ -249,7 +249,7 @@ const CostEstimationPage = () => {
 
   const handleJobRegistration = (id) => {
     console.log(`Job registration for cost estimation ${id} clicked`);
-    navigate(`/jobRegistration/${id}`);
+    navigate(`/estimation/jobRegistration/${id}`);
     notifySuccess(`Proceeding to job registration for accepted quotation #${id}`);
   };
 

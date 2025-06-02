@@ -26,8 +26,9 @@ import CostEstimationPage from "./pages/CostEstimations";
 import AddCostEstimationPage from "./pages/AddCostEstimation";
 import CostEstimationViewPage from "./pages/CostEstimationView";
 import AddCostEstimationNewVersionPage from "./pages/AddCostEstimationNewVersion";
-import LoginPage from "./pages/LoginPage";
 import AppFlow from "./pages/AppFlow";
+//import AddJobPage from "./pages/AddJob";
+import JobPage from "./pages/Job";
 
 function App() {
 
@@ -78,6 +79,9 @@ function App() {
           <Route path="/estimation/editCostEstimation/:inquiryId/:id" element={<AddCostEstimationPage/>} />
           <Route path="/estimation/costEstimationView/:inquiryId/:id" element={<CostEstimationViewPage/>} />
           <Route path="/estimation/createCostEstimation/:inquiryId/:id" element={<AddCostEstimationNewVersionPage/>} />
+
+          <Route path="/project/job" element={<JobPage />} />
+          {/*<Route path="/estimation/jobRegistration/:estimationId" element={<AddJobPage/>} />*/}
         </Routes>
       </NotificationProvider>
     </Router>
