@@ -155,7 +155,7 @@ const CustomerView = () => {
 
   // Handle customer selection and update URL
   const handleCustomerSelect = (customer) => {
-    navigate(`/people/customerView/${customer.customerId}`, { 
+    navigate(`/people/customer/customerView/${customer.customerId}`, { 
       state: { selectedCustomerId: customer.customerId },
       replace: true 
     });
@@ -180,7 +180,7 @@ const CustomerView = () => {
   };
 
   const handleEditToCustomer = () => {
-    navigate(`/people/editcustomer/${selectedCustomerId}`);
+    navigate(`/people/customer/editcustomer/${selectedCustomerId}`);
   };
 
   const handleDeleteCustomer = async () => {

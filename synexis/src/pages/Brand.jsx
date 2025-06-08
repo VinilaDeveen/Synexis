@@ -216,11 +216,11 @@ const BrandPage = () => {
   };
   
   const handleAddBrand = () => {
-    navigate('/inventory/addBrand');
+    navigate('/inventory/brand/addBrand');
   };
 
   const handleEditBrand = (id) => {
-    navigate(`/inventory/editBrand/${id}`);
+    navigate(`/inventory/brand/editBrand/${id}`);
   };
 
   const handleDeleteBrand = (id) => {
@@ -286,7 +286,7 @@ const BrandPage = () => {
           <MdDelete size={isMobile ? 16 : 18} />
         </div>
         <Link 
-          to={`/inventory/brandView/${params.id}`} 
+          to={`/inventory/brand/brandView/${params.id}`} 
           state={{ selectedBrandId: params.id }}
         >
           <div 

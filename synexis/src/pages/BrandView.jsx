@@ -1,5 +1,6 @@
 import Navbar from '../components/Navbar';
 import Sidebar from '../components/Sidebar';
+import InactiveCategoryWarning from '../components/WarningWidget';
 import { 
   FullPageLoader, 
   InlineLoader, 
@@ -33,6 +34,7 @@ function BrandView() {
   });
   const [loading, setLoading] = useState(false);
   const [brandLoading, setBrandLoading] = useState(false);
+  const [activateLoading, setActivateLoading] = useState(false);
   const isInitialLoad = useRef(true);
   const isInitialLoad1 = useRef(true);
   
@@ -207,7 +209,7 @@ function BrandView() {
 
   // Handle brand selection and update URL
   const handleBrandSelect = (brand) => {
-    navigate(`/inventory/brandView/${brand.brandId}`, { 
+    navigate(`/inventory/brand/brandView/${brand.brandId}`, { 
       state: { selectedBrandId: brand.brandId },
       replace: true 
     });
@@ -303,7 +305,7 @@ function BrandView() {
   };
 
   const handleEditToBrand = () => {
-    navigate(`/inventory/editBrand/${selectedBrandId}`);
+    navigate(`/inventory/brand/editBrand/${selectedBrandId}`);
   };
 
   const handleDeleteBrand = async () => {
@@ -321,6 +323,40 @@ function BrandView() {
       } finally {
         setLoading(false);
       }
+   };
+
+   // Handle brand activation
+   const handleActivateBrand = async () => {
+    if (!selectedBrandId) return;
+
+    try {
+      setActivateLoading(true);
+      await brandService.activate(selectedBrandId)
+
+      setSelectedBrand(prev =>({
+        ...prev,
+        brandStatus: 'ACTIVE'
+      }))
+
+      setBrands(prev => 
+        prev.map(brand =>
+          brand.brandId === selectedBrandId
+           ? { ...brand, brandStatus: 'ACTIVE' }
+           : brand
+        )
+      );
+
+      notifySuccess(`Brand "${selectedBrand.brandName}" has been activated successfully`)
+    } catch (error) {
+      notifyError(`Error activating brand: ${error.message || 'Unknown error'}`);
+    } finally {
+      setActivateLoading(false);
+    }
+   }
+
+   // Check if brand is inactive
+   const isBrandInactive = () => {
+    return selectedBrand && selectedBrand.brandStatus?.toUpperCase() === 'INACTIVE';
    };
     
 
@@ -441,6 +477,18 @@ function BrandView() {
                   </div>
                 </div>
 
+                {/* Inactive Category Warning Widget */}
+                {isBrandInactive() && (
+                  <InactiveCategoryWarning 
+                    title = "Brand Inactive"
+                    entity={'Brand'}
+                    entityName={`${selectedBrand.brandName}`}
+                    onActivate={handleActivateBrand}
+                    loading={activateLoading}
+                    className="mb-4"
+                  />
+                )}
+
                 {/* Brand Content with Loading State */}
                 {brandLoading ? (
                   <div className="flex items-center justify-center h-40">
@@ -467,7 +515,7 @@ function BrandView() {
                     {/* Tab Content */}
                     <div className="p-6">
                       {activeTab === 'overview' ? (
-                        <div className="max-h-[calc(100vh-270px)] overflow-y-auto" style={{
+                        <div className={`overflow-y-auto ${selectedBrand.brandStatus === 'INACTIVE' ? "max-h-[calc(100vh-360px)]" : "max-h-[calc(100vh-260px)]"}`} style={{
                           scrollbarWidth: 'thin',
                           scrollbarColor: '#3B50DF #D9D9D9'
                         }}>
@@ -490,7 +538,11 @@ function BrandView() {
                                 </div>
                                 <div className="flex">
                                   <span className="w-32 text-gray-400">Status</span>
-                                  <span>{selectedBrand.brandStatus?.toLowerCase()}</span>
+                                  <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                                  selectedBrand.brandStatus?.toUpperCase() === 'ACTIVE' 
+                                    ? 'bg-green-100 text-green-800' 
+                                    : 'bg-red-100 text-red-800'
+                                }`}>{selectedBrand.brandStatus?.toLowerCase()}</span>
                                 </div>
                                 <div className="flex">
                                   <span className="w-32 text-gray-400">Description</span>
@@ -562,7 +614,7 @@ function BrandView() {
                           )}
                         </div>
                       ) : (
-                        <div className="max-h-[calc(100vh-260px)] overflow-y-auto" style={{
+                        <div className={`overflow-y-auto ${selectedBrand.brandStatus === 'INACTIVE' ? "max-h-[calc(100vh-360px)]" : "max-h-[calc(100vh-260px)]"}`} style={{
                           scrollbarWidth: 'thin',
                           scrollbarColor: '#3B50DF #D9D9D9'
                         }}>

@@ -9,24 +9,21 @@ import {
 } from '../components/loaders';
 import { useState, useEffect, useRef } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { FaEdit, FaEye } from "react-icons/fa";
-import { MdDelete } from "react-icons/md";
+import { FaEye } from "react-icons/fa";
 import { LuHistory } from "react-icons/lu";
-import { Search, Plus, Menu } from 'lucide-react';
+import { Search, Check, X, Menu, Plus } from 'lucide-react';
 import { DataGrid } from '@mui/x-data-grid';
 import { createTheme, ThemeProvider } from '@mui/material/styles';
 import { ToastContainer } from 'react-toastify';
 import { useNotification } from '../hooks/useNotification';
-import { customerService } from '../services/customerService';
-import { recentActivityService } from '../services/recentActivityService';
+import { jobService } from '../services/jobService';
 
-const CustomerPage = () => {
+const JobApprovalPage = () => {
   const { notifySuccess, notifyError, notifyWarning, notifyDefault } = useNotification();
-  const [customers, setCustomers] = useState([]);
+  const [jobs, setJobs] = useState([]);
   const navigate = useNavigate();
   
   // State for recent activities panel and sidebar visibility
-  const [recentActivities, setRecentActivities] = useState('');
   const [showActivities, setShowActivities] = useState(false);
   const [showSidebar, setShowSidebar] = useState(true);
   const [isMobile, setIsMobile] = useState(false);
@@ -39,7 +36,7 @@ const CustomerPage = () => {
   const [loading, setLoading] = useState(true); // Start with loading true
   const isInitialLoad = useRef(true);
   
-  // Check screen size and set mobile state - moved up to run first
+  // Check screen size and set mobile state
   useEffect(() => {
     const handleResize = () => {
       setIsMobile(window.innerWidth < 768);
@@ -59,53 +56,31 @@ const CustomerPage = () => {
     // Cleanup
     return () => window.removeEventListener('resize', handleResize);
   }, []);
-
-  // Fetch recent activities from API
-  useEffect(() => {
-    const fetchActivities = async () => {
-      try {
-        setLoading(true);
-        const response = await recentActivityService.getAllCustomerActivity();
-        if (response && response.data) {
-          setRecentActivities(response.data);
-        }
-      } catch (error) {
-        if (isInitialLoad.current){
-          console.error('Error fetching activities:', error);
-          notifyError(`Failed to load recent activities: ${error.message || 'Unknown error'}`);
-          isInitialLoad.current = false;
-        }
-      } finally {
-        setLoading(false);
-      }
-    };
-    
-    // Fetch the activities
-    fetchActivities();
-  }, []);
   
-  // Fetch customers from API
+  // Fetch jobs from API
   useEffect(() => {
-    const fetchCustomers = async () => {
+    const fetchJobs = async () => {
       try {
         setLoading(true);
-        const response = await customerService.getAll();
+        
+        // In a real implementation, this would be:
+        const response = await jobService.getAll();
         if (response && response.data) {
-          setCustomers(response.data);
+          setJobs(response.data);
         }
+        setLoading(false);
       } catch (error) {
-        if (isInitialLoad.current){
-          console.error('Error fetching customers:', error);
-          notifyError(`Failed to load customers: ${error.message || 'Unknown error'}`);
+        if (isInitialLoad.current) {
+          console.error('Error fetching jobs:', error);
+          notifyError(`Failed to load jobs: ${error.message || 'Unknown error'}`);
           isInitialLoad.current = false;
         }
-      } finally {
         setLoading(false);
       }
     };
 
-    // Fetch the customers
-    fetchCustomers();
+    // Fetch the jobs
+    fetchJobs();
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   // We need to check loading state before returning the full component
@@ -117,6 +92,12 @@ const CustomerPage = () => {
   const toggleSidebar = () => {
     setShowSidebar(!showSidebar);
   };
+  
+  // Recent activities data
+  const recentActivities = [
+    { item: "Maga", action: "job approval request by", user: "John Doe", date: "15 March 2025 14:30" },
+    { item: "Luna", action: "job accepted by", user: "Steve Johns", date: "10 March 2025 09:45" },
+  ];
   
   // Toggle recent activities panel
   const toggleActivitiesPanel = () => {
@@ -163,92 +144,173 @@ const CustomerPage = () => {
   const handleSearchChange = (e) => {
     setSearchTerm(e.target.value);
   };
-
-  const handleEditCustomer = (id) => {
-    navigate(`/people/customer/editCustomer/${id}`);
+  
+  const handleCreateJob = () => {
+    console.log("Create job clicked");
+    notifySuccess('Create job dialog opened');
   };
 
-  const handleViewCustomer = (id) => {
-    navigate(`/people/customer/customerView/${id}`);
-  };
-
-  const handleDeleteCustomer = (id) => {
+  const handleApproveJob = (id) => {
     try {
-      // Find the customer being deleted
-      const customerToDelete = customers.find(customer => customer.customerId === id);
-      const customerName = customerToDelete ? customerToDelete.name || customerToDelete.customerName : 'Unknown';
+      console.log(`Approve job ${id} clicked`);
+      // Find the job being approved
+      const jobToApprove = jobs.find(job => job.jobId === id);
+      const jobNumber = jobToApprove ? jobToApprove.quotationNumber : 'Unknown';
       
-      // Simulate API call for deletion
-      customerService.delete(id);
-      notifySuccess(`Customer "${customerName}" successfully deleted`);
+      // In a real app, this would call an API
+      // jobService.approve(id);
+      
+      // Update local state to change the status of the approved job
+      setJobs(jobs.map(job => 
+        job.jobId === id ? { ...job, status: 'ACCEPTED' } : job
+      ));
+      
+      notifySuccess(`Job "${jobNumber}" successfully approved`);
     } catch (error) {
-      notifyError(`Error deleting customer: ${error.message || 'Unknown error'}`);
+      notifyError(`Error approving job: ${error.message || 'Unknown error'}`);
+    }
+  };
+
+  const handleRejectJob = (id) => {
+    try {
+      console.log(`Reject job ${id} clicked`);
+      // Find the job being rejected
+      const jobToReject = jobs.find(job => job.jobId === id);
+      const jobNumber = jobToReject ? jobToReject.quotationNumber : 'Unknown';
+      
+      // In a real app, this would call an API
+      // jobService.reject(id);
+      
+      // Update local state to change the status of the rejected job
+      setJobs(jobs.map(job => 
+        job.jobId === id ? { ...job, status: 'REJECTED' } : job
+      ));
+      
+      notifyWarning(`Job "${jobNumber}" has been rejected`);
+    } catch (error) {
+      notifyError(`Error rejecting job: ${error.message || 'Unknown error'}`);
     }
   };
   
-  // Custom render components for DataGrid - moved up before they're used
-  const renderNameCell = (params) => {
-    const customer = params.value;
-    const customerStatus = params.row.status;
-    const isActive = customerStatus === 'ACTIVE';
+  const handleViewJob = (id) => {
+    console.log(`View job ${id} clicked`);
+  };
+  
+  // Custom render cell for job status
+  const renderStatusCell = (params) => {
+    const status = params.value;
+    let statusColor = '';
+    let bgColor = '';
+    
+    switch(status) {
+      case 'APPROVED_BY_SALESMANAGER':
+        statusColor = 'text-emerald-700';
+        bgColor = 'bg-emerald-100';
+        break;
+      case 'APPROVED_BY_ACCOUNTANT':
+        statusColor = 'text-green-700';
+        bgColor = 'bg-green-100';
+        break;
+      case 'READY_FOR_PRODUCTION':
+        statusColor = 'text-blue-700';
+        bgColor = 'bg-blue-100';
+        break;
+      case 'ONGOING':
+        statusColor = 'text-purple-700';
+        bgColor = 'bg-purple-100';
+        break;
+      case 'BLOCKED':
+        statusColor = 'text-red-700';
+        bgColor = 'bg-red-100';
+        break;
+      case 'WAITING_FOR_MATERIALS':
+        statusColor = 'text-orange-700';
+        bgColor = 'bg-orange-100';
+        break;
+      case 'PENDING':
+        statusColor = 'text-yellow-700';
+        bgColor = 'bg-yellow-100';
+        break;
+      case 'COMPLETED':
+        statusColor = 'text-green-800';
+        bgColor = 'bg-green-50';
+        break;
+      case 'CLOSED':
+        statusColor = 'text-gray-700';
+        bgColor = 'bg-gray-100';
+        break;
+      default:
+        statusColor = 'text-gray-700';
+        bgColor = 'bg-gray-100';
+    }
     
     return (
-      <div className="flex items-center">
-        <div className={`w-2 h-2 rounded-full mr-2 ${isActive ? 'bg-green-500' : 'bg-red-500'}`}></div>
-        <div>
-          <span className="font-medium text-gray-900">
-            {customer}
-          </span>
-        </div>
-      </div>
-    );
-  };
-
-  const renderPhoneCell = (params) => {
-    return (
-      <div className="text-gray-700">
-        {params.value || 'N/A'}
-      </div>
-    );
-  };
-
-  const renderEmailCell = (params) => {
-    return (
-      <div className="text-gray-700">
-        {params.value || 'N/A'}
+      <div className={`inline-block px-2 py-1 rounded-full ${statusColor} ${bgColor} text-xs font-medium`}>
+        {status}
       </div>
     );
   };
   
+  // Custom render component for actions
   const renderActionsCell = (params) => {
+    const isPending = params.row.status === 'PENDING';
+    const isApprovedBySalesman = params.row.status === 'APPROVED_BY_ACCOUNTANT';
+    
     return (
-      <div className="flex gap-2 md:gap-6 mt-4">
-        <div 
-          className="text-[#3B50DF] hover:text-blue-900 cursor-pointer"
-          onClick={() => handleEditCustomer(params.id)}
-          title="Edit Customer"
-        >
-          <FaEdit size={isMobile ? 16 : 18} />
-        </div>
-        <div 
-          className="text-[#3B50DF] hover:text-red-500 cursor-pointer"
-          onClick={() => handleDeleteCustomer(params.id)}
-          title="Delete Customer"
-        >
-          <MdDelete size={isMobile ? 16 : 18} />
-        </div>
+      <div className="flex mt-2 gap-2 items-center">
         <Link 
-          to={`/people/customer/customerView/${params.id}`} 
-          state={{ selectedCustomerId: params.id }}
+          to={`/project/job/jobView/${params.id}`} 
+          state={{ selectedJobId: params.id }}
         >
           <div 
             className="text-[#3B50DF] hover:text-green-500 cursor-pointer"
-            title="View Customer Details"
-            onClick={() => handleViewCustomer(params.id)}
+            title="View Job Details"
+            onClick={() => handleViewJob(params.id)}
           >
             <FaEye size={isMobile ? 16 : 18} />
           </div>
         </Link>
+        {isPending && (
+          <>
+            <button 
+              onClick={() => handleApproveJob(params.id)}
+              className="bg-green-500 hover:bg-green-600 text-white px-2 py-1 text-xs rounded flex items-center gap-1"
+              title="Approve Job"
+            >
+              <Check size={14} />
+              <span>Approve</span>
+            </button>
+            <button 
+              onClick={() => handleRejectJob(params.id)}
+              className="bg-red-500 hover:bg-red-600 text-white px-2 py-1 text-xs rounded flex items-center gap-1"
+              title="Reject Job"
+            >
+              <X size={14} />
+              <span>Reject</span>
+            </button>
+          </>
+        )}
+
+        {isApprovedBySalesman && (
+          <>
+            <button 
+              onClick={() => handleApproveJob(params.id)}
+              className="bg-green-500 hover:bg-green-600 text-white px-2 py-1 text-xs rounded flex items-center gap-1"
+              title="Approve Job"
+            >
+              <Check size={14} />
+              <span>Approve</span>
+            </button>
+            <button 
+              onClick={() => handleRejectJob(params.id)}
+              className="bg-red-500 hover:bg-red-600 text-white px-2 py-1 text-xs rounded flex items-center gap-1"
+              title="Reject Job"
+            >
+              <X size={14} />
+              <span>Reject</span>
+            </button>
+          </>
+        )}
       </div>
     );
   };
@@ -258,19 +320,25 @@ const CustomerPage = () => {
     // Base columns that always show
     const baseColumns = [
       { 
-        field: 'name', 
-        headerName: 'Name', 
+        field: 'quotationNumber', 
+        headerName: 'Quotation Number', 
         flex: 1,
-        minWidth: 150,
-        renderCell: renderNameCell,
+        minWidth: 180,
         headerAlign: 'left',
         align: 'left',
-        headerClassName: 'name-column-header',
+      },
+      { 
+        field: 'projectName', 
+        headerName: 'Project Name', 
+        flex: 1,
+        minWidth: 150,
+        headerAlign: 'left',
+        align: 'left'
       },
       { 
         field: 'actions', 
         headerName: 'Actions', 
-        width: 150, 
+        width: 220, 
         renderCell: renderActionsCell,
         sortable: false,
         filterable: false,
@@ -282,48 +350,44 @@ const CustomerPage = () => {
     // Additional columns for larger screens
     const additionalColumns = [
       { 
-        field: 'phone', 
-        headerName: 'Phone Number', 
-        flex: 0.8,
-        minWidth: 120,
-        renderCell: renderPhoneCell,
+        field: 'customerName', 
+        headerName: 'Customer', 
+        flex: 1,
+        minWidth: 160,
         headerAlign: 'left',
         align: 'left'
       },
-      { 
-        field: 'email', 
-        headerName: 'Email', 
-        flex: 1,
-        minWidth: 180,
-        renderCell: renderEmailCell,
+      {
+        field: 'status',
+        headerName: 'Status',
+        width: 250,
+        renderCell: renderStatusCell,
         headerAlign: 'left',
         align: 'left'
       }
     ];
     
-    return isMobile ? baseColumns : [...baseColumns.slice(0, 1), ...additionalColumns, baseColumns[1]];
+    return isMobile ? baseColumns : [...baseColumns.slice(0, 1), ...additionalColumns, baseColumns[1], baseColumns[2]];
   };
   
-  // Filter customers based on search term
-  const filteredCustomers = searchTerm.trim() === '' 
-    ? customers 
-    : customers.filter(customer => 
-        (customer.name && customer.name.toLowerCase().includes(searchTerm.toLowerCase())) ||
-        (customer.customerName && customer.customerName.toLowerCase().includes(searchTerm.toLowerCase())) ||
-        (customer.fullName && customer.fullName.toLowerCase().includes(searchTerm.toLowerCase())) ||
-        (customer.email && customer.email.toLowerCase().includes(searchTerm.toLowerCase())) ||
-        (customer.phone && customer.phone.toLowerCase().includes(searchTerm.toLowerCase())) ||
-        (customer.phoneNumber && customer.phoneNumber.toLowerCase().includes(searchTerm.toLowerCase()))
+  // Filter jobs based on search term
+  const filteredJobs = searchTerm.trim() === '' 
+    ? jobs 
+    : jobs.filter(job => 
+        (job.quotationNumber && job.quotationNumber.toLowerCase().includes(searchTerm.toLowerCase())) ||
+        (job.projectName && job.projectName.toLowerCase().includes(searchTerm.toLowerCase())) ||
+        (job.customerName && job.customerName.toLowerCase().includes(searchTerm.toLowerCase())) ||
+        (job.status && job.status.toLowerCase().includes(searchTerm.toLowerCase()))
       );
   
   // Prepare data for DataGrid
-  const rows = filteredCustomers.map(customer => ({
-    id: customer.customerId,
-    name: customer.customerName,
-    phone: customer.customerPhoneNumber,
-    email: customer.customerEmail,
-    status: customer.customerStatus,
-    actions: customer.customerId
+  const rows = filteredJobs.map(job => ({
+    id: job.jobId,
+    quotationNumber: job.quotationVersion,
+    projectName: job.projectName,
+    customerName: job.customerName,
+    status: job.jobStatus,
+    date: job.date
   }));
 
   return (
@@ -357,11 +421,11 @@ const CustomerPage = () => {
         <div className="p-2 sm:p-4 md:p-6 flex-1 overflow-auto">
           {/* Toast notifications */}
           <ToastContainer className="mt-[70px]" />
-          <h1 className="text-xl md:text-2xl font-semibold mb-2 md:mb-4 pl-2">Customers</h1>
+          <h1 className="text-xl md:text-2xl font-semibold mb-2 md:mb-4 pl-2">Jobs</h1>
 
-          {/* Customer Table Card */}
+          {/* Job Table Card */}
           <div className="bg-white rounded-lg shadow">
-            {/* Search and Add Customer */}
+            {/* Search and Create Job */}
             <div className="p-3 md:p-4 flex flex-col sm:flex-row sm:justify-between gap-3 sm:gap-0">
               <div className="flex items-center w-full sm:w-auto">
                 <div 
@@ -384,14 +448,6 @@ const CustomerPage = () => {
                   />
                 </div>
               </div>
-              <Link to="/people/customer/addCustomer">
-                <button 
-                  className="bg-[#3C50E0] hover:bg-blue-700 text-white px-3 py-2 text-sm rounded-lg flex items-center justify-center sm:justify-start gap-2 focus:outline-none"
-                >
-                  <Plus size={16} />
-                  <span>Add Customer</span>
-                </button>
-              </Link>
             </div>
             <hr />
 
@@ -449,4 +505,4 @@ const CustomerPage = () => {
   );
 };
 
-export default CustomerPage;
+export default JobApprovalPage;

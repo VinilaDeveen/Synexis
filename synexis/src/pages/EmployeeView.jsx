@@ -195,7 +195,7 @@ function EmployeeView() {
 
   // Handle employee selection and update URL
   const handleEmployeeSelect = (employee) => {
-    navigate(`/people/employeeView/${employee.employeeId}`, { 
+    navigate(`/people/employee/employeeView/${employee.employeeId}`, { 
       state: { selectedEmployeeId: employee.employeeId },
       replace: true 
     });
@@ -220,7 +220,7 @@ function EmployeeView() {
   };
 
   const handleEditEmployee = () => {
-    navigate(`/people/editEmployee/${selectedEmployeeId}`);
+    navigate(`/people/employee/editEmployee/${selectedEmployeeId}`);
   };
 
   const handleDeleteEmployee = async () => {

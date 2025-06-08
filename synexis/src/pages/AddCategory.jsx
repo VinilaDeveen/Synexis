@@ -27,7 +27,11 @@ const AddCategoryPage = () => {
   });
   
   const [isSubCategory, setIsSubCategory] = useState(false);
+
+  const [parentCategorySearchTerm, setParentCategorySearchTerm] = useState("");
   const [parentCategories, setParentCategories] = useState([]);
+  const [showParentCategoryDropdown, setShowParentCategoryDropdown] = useState(false);
+
   const [loading, setLoading] = useState(false);
   const [submitting, setSubmitting] = useState(false); // Add a specific state for submit button loading
   const isInitialLoad = useRef(true);
@@ -42,7 +46,7 @@ const AddCategoryPage = () => {
   useEffect(() => {
     const fetchParentCategories = async () => {
       try {
-        const response = await categoryService.getAllParentCategories();
+        const response = await categoryService.getParentCategoryDropDown(parentCategorySearchTerm);
         setParentCategories(response.data);
       } catch (err) {
         if (isInitialLoad.current) {
@@ -53,8 +57,14 @@ const AddCategoryPage = () => {
       }
     };
 
-    fetchParentCategories();
-  }, []);
+    const debounceTimer = setTimeout(() => {
+      if (parentCategorySearchTerm.trim() !== "" || showParentCategoryDropdown) {
+        fetchParentCategories();
+      }
+    }, 300);
+
+    return () => clearTimeout(debounceTimer);
+  }, [parentCategorySearchTerm, showParentCategoryDropdown]);
 
   // If in edit mode, fetch the category details
   useEffect(() => {
@@ -177,7 +187,10 @@ const AddCategoryPage = () => {
 
           {/* Add/Edit Category Form */}
           <form onSubmit={handleSubmit}>
-            <div className="bg-white rounded-lg shadow-lg p-6">
+            <div className={`overflow-y-auto max-h-[calc(100vh-240px)] bg-white rounded-lg shadow-lg p-6`} style={{
+              scrollbarWidth: 'thin',
+              scrollbarColor: '#3B50DF #D9D9D9'
+            }}>
               <div className="p-4 justify-between">
                 <div>
                   <label htmlFor="categoryName">Category Name</label>
@@ -257,23 +270,47 @@ const AddCategoryPage = () => {
                     <label htmlFor="parentCategory" className="block mb-2">Parent Category</label>
                     <div className='flex'>
                       <div>
-                      <select
+                      <div className="relative">
+                        <input
+                        type='text'
                         id="parentCategory"
-                        value={formData.parentCategoryId || ''}
-                        onChange={handleParentChange}
-                        className="py-2 bg-[#E3F0FF] w-[400px] rounded focus:outline-none"
+                        autoComplete='off'
+                        value={parentCategorySearchTerm}
+                        onChange={(e) => {
+                          setParentCategorySearchTerm(e.target.value);
+                          setShowParentCategoryDropdown(true);
+                        }}
+                        onFocus={() => setShowParentCategoryDropdown(true)}
+                        onBlur={() => setTimeout(() => setShowParentCategoryDropdown(false), 200)}
+                        className="py-2 bg-blue-50 w-[250px] rounded focus:outline-none px-3"
+                        placeholder="Search parent category..."
                         required={isSubCategory}
-                      >
-                        <option value="">Select Parent Category</option>
-                        {parentCategories
-                          .filter(category => category && category.parentCategoryId ) // Filter out null/undefined categories
-                          .map(category => (
-                            <option key={category.parentCategoryId} value={category.parentCategoryId}>
-                              {category.parentCategoryName}
-                            </option>
-                          ))
-                        }
-                      </select>
+                      />
+                      {showParentCategoryDropdown && (
+                        <div className="absolute z-10 mt-1 w-full bg-white shadow-lg rounded-md border border-gray-200 max-h-60 overflow-auto">
+                          {parentCategories.length > 0 ? (
+                            parentCategories.map((category) => (
+                              <div
+                                key={category.parentCategoryId}
+                                className='px-4 py-2 text-left hover:bg-gray-100 cursor-pointer'
+                                onClick={() => {
+                                  setFormData(prev => ({
+                                    ...prev,
+                                    parentCategoryId: category.parentCategoryId
+                                  }));
+                                  setParentCategorySearchTerm(category.parentCategoryName);
+                                  setShowParentCategoryDropdown(false);
+                                }}
+                              >
+                                {category.parentCategoryName}
+                              </div>
+                            ))
+                          ):(
+                            <div className="px-4 py-2 text-gray-500">No category found</div>
+                          )}
+                          </div>
+                        )}
+                      </div>
                       </div>
                       <div className='mt-3'>
                         {/* Using the custom tooltip hook again with the same configuration */}

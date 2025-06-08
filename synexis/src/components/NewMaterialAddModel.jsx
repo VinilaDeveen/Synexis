@@ -14,9 +14,9 @@ const NewMaterialAddModal = ({ isOpen, onClose, onSave, sections }) => {
 
   // Map material types to section names
   const materialTypeToSection = {
-    'SWITCH_GEAR': 'Switch Gear Components',
+    'SWITCH_GEAR_COMPONENTS': 'Switch Gear Components',
     'CONTROL_ACCESSORIES': 'Control Accessories',
-    'BUS_BAR': 'Bus Bar',
+    'BUSBAR': 'Bus Bar',
     'WIRING': 'Wiring',
     'OTHER_ACCESSORIES': 'Other Accessories',
     'ELECTRICAL_LABOR': 'Electrical Labor',
@@ -90,6 +90,7 @@ const NewMaterialAddModal = ({ isOpen, onClose, onSave, sections }) => {
     // Create the material data object with all required fields
     const materialPayload = {
       name: searchTerm,
+      materialId:materialData?.materialId,
       marketPrice: materialData?.materialMarketPrice || 0,
       unitPrice: materialData?.materialMarketPrice || 0,
       discount: 0,

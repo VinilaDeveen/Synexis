@@ -28,30 +28,47 @@ const AddMaterialPage = () => {
 
   const [formData, setFormData] = useState({
     name: '',
-  sku: '',
-  description: '',
-  partNumber: '',
-  image: null,
-  materialId: null,
-  imageUrl: null,
-  inventoryType: '',
-  materialType: '',
-  brandId: '', 
-  parentCategoryId: '', 
-  make: '',
-  purchasePrice: 0.00,
-  marketPrice: 0.00,
-  alertQuantity: 0.00,
-  baseUnitId: '', 
-  otherUnitId: '',
-  materialForUse: false 
+    sku: '',
+    description: '',
+    partNumber: '',
+    image: null,
+    materialId: null,
+    imageUrl: null,
+    inventoryType: '',
+    materialType: '',
+    brandId: '', 
+    parentCategoryId: '',
+    subCategoryId: '', 
+    make: '',
+    purchasePrice: 0.00,
+    marketPrice: 0.00,
+    alertQuantity: 0.00,
+    baseUnitId: '', 
+    otherUnitId: '',
+    materialForUse: false 
   });
 
+  const [originalImageFile, setOriginalImageFile] = useState(null);
+  const [brandSearchTerm, setBrandSearchTerm] = useState("");
   const [brands, setBrands] = useState([]);
-  const [Categories, setCategories] = useState([]);
-  const [SubCategories, setSubCategories] = useState([]);
-  const [BaseUnits, setBaseUnits] = useState([]);
-  const [OtherUnits, setOtherUnits] = useState([]);
+  const [showBrandDropdown, setShowBrandDropdown] = useState(false);
+  
+  const [parentCategorySearchTerm, setParentCategorySearchTerm] = useState("");
+  const [categories, setCategories] = useState([]);
+  const [showParentCategoryDropdown, setShowParentCategoryDropdown] = useState(false);
+
+  const [subCategorySearchTerm, setSubCategorySearchTerm] = useState("");
+  const [subCategories, setSubCategories] = useState([]);
+  const [showSubCategoryDropDown, setShowSubCategoryDropDown] = useState(false);
+
+  const [baseUnitSearchterm, setBaseUnitSearchTerm] = useState("");
+  const [baseUnits, setBaseUnits] = useState([]);
+  const [showBaseUnitDropdown, setShowBaseUnitDropdown] = useState(false);
+
+  const [otherUnitSearchTerm, setOtherUnitSearchTerm] = useState("");
+  const [otherUnits, setOtherUnits] = useState([]);
+  const [showOtherUnitDropDown, setShowOtherUnitDropDown] = useState(false);
+
   const [activeTab, setActiveTab] = useState('generalInfo');
   const [imageChanged, setImageChanged] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -60,6 +77,20 @@ const AddMaterialPage = () => {
   const isInitialLoad = useRef(true);
   const isInitialLoad1 = useRef(true);
   const isInitialLoad2 = useRef(true);
+
+  const convertImageUrlToFile = async (imageUrl, materialId, filename = 'brand-image.jpg') => {
+    try {
+      const response = await fetch(`http://localhost:8080/api/synexis/material/image/${materialId}`);
+      const blob = await response.blob();
+      
+      // Create a File object from the blob
+      const file = new File([blob], filename, { type: blob.type || 'image/jpeg' });
+      return file;
+    } catch (error) {
+      console.error('Error converting image URL to File:', error);
+      return null;
+    }
+  };
 
   // Custom tooltip hooks for info icons
   const skuTooltip = useTooltip(
@@ -87,40 +118,48 @@ const AddMaterialPage = () => {
     'right'
   );
 
-    // Fetch brands for dropdown
+    // Fetch brands for dropdown with search term
     useEffect(() => {
       const fetchBrands = async () => {
         try {
-          const response = await brandService.getAll();
+          const response = await brandService.getBranddropdown(brandSearchTerm);
           setBrands(response.data);
         } catch (err) {
-          if (isInitialLoad1.current) {
-            notifyError('Failed to load brands. Please try again.')
-            isInitialLoad1.current = false;
-          }
-          
+          notifyError('Failed to load brands. Please try again.');
         }
       };
-  
-      fetchBrands();
-    }, []);
+
+      const debounceTimer = setTimeout(() => {
+        if (brandSearchTerm.trim() !== "" || showBrandDropdown) {
+          fetchBrands();
+        }
+      }, 300);
+
+      return () => clearTimeout(debounceTimer);
+    }, [brandSearchTerm, showBrandDropdown]);
 
     // Fetch parent categories for dropdown
     useEffect(() => {
         const fetchCategories = async () => {
           try {
-            const response = await categoryService.getAllCategories();
+            const response = await categoryService.getParentCategoryDropDown(parentCategorySearchTerm);
             setCategories(response.data);
           } catch (err) {
             if (isInitialLoad2.current) {
               notifyError('Failed to load categories. Please try again.')
               isInitialLoad2.current = false;
-            }
-            
+            }      
           }
         };
-      fetchCategories();
-    }, []);
+
+        const debounceTimer = setTimeout(() => {
+          if (parentCategorySearchTerm.trim() !== "" || showParentCategoryDropdown) {
+            fetchCategories();
+          }
+        }, 300);
+      
+        return () => clearTimeout(debounceTimer);
+    }, [parentCategorySearchTerm, showParentCategoryDropdown]);
 
     // Fetch sub category for dropdown
     useEffect(() => {
@@ -128,7 +167,7 @@ const AddMaterialPage = () => {
       // Only fetch subcategories if a parent category is selected
       if (formData.parentCategoryId) {
         try {
-          const response = await categoryService.getAllSubCategories(formData.parentCategoryId);
+          const response = await categoryService.getSubCategoryDropDown(formData.parentCategoryId, subCategorySearchTerm);
           setSubCategories(response.data);
         } catch (err) {
           if (isInitialLoad2.current) {
@@ -139,17 +178,22 @@ const AddMaterialPage = () => {
       } else {
         // Clear subcategories if no parent category is selected
         setSubCategories([]);
-      }
-    };
+      };
+    }
 
-    fetchSubCategories();
-  }, [formData.parentCategoryId]);
+      const debounceTimer = setTimeout(() => {
+          if (subCategorySearchTerm.trim() !== "" || showSubCategoryDropDown) {
+            fetchSubCategories();
+          }
+        }, 300);
+        return () => clearTimeout(debounceTimer)
+    }, [subCategorySearchTerm, showSubCategoryDropDown, formData.parentCategoryId]);
 
   // Fetch base unit for dropdown
     useEffect(() => {
         const fetchBaseUnits = async () => {
           try {
-            const response = await unitService.getAllBaseUnits();
+            const response = await unitService.getBaseUnitDropDown(baseUnitSearchterm);
             setBaseUnits(response.data);
           } catch (err) {
             if (isInitialLoad2.current) {
@@ -159,30 +203,40 @@ const AddMaterialPage = () => {
             
           }
         };
-      fetchBaseUnits();
-    }, []);
+
+        const debounceTimer = setTimeout(() => {
+          if (baseUnitSearchterm.trim() !== "" || showBaseUnitDropdown) {
+            fetchBaseUnits();
+          }
+        }, 300);
+        return () => clearTimeout(debounceTimer)
+    }, [baseUnitSearchterm, showBaseUnitDropdown]);
 
     // Fetch other unit for dropdown
     useEffect(() => {
         const fetchOtherUnits = async () => {
           if (formData.baseUnitId) {
             try {
-                const response = await unitService.getAllOtherUnits(formData.baseUnitId);
+                const response = await unitService.getOtherUnitDropDown(formData.baseUnitId, otherUnitSearchTerm);
                 setOtherUnits(response.data);
               } catch (err) {
                 if (isInitialLoad2.current) {
                   notifyError('Failed to load categories. Please try again.')
                   isInitialLoad2.current = false;
                 }
-                
               }
-      } else {
-        // Clear subcategories if no parent category is selected
-        setOtherUnits([]);
-      }
+          } else {
+            // Clear subcategories if no parent category is selected
+            setOtherUnits([]);
+          }
         };
-      fetchOtherUnits();
-    }, [formData.baseUnitId]);
+      const debounceTimer = setTimeout(() => {
+          if (otherUnitSearchTerm.trim() !== "" || showOtherUnitDropDown) {
+            fetchOtherUnits();
+          }
+        }, 300);
+        return () => clearTimeout(debounceTimer)
+    }, [otherUnitSearchTerm, showOtherUnitDropDown, formData.baseUnitId]);
 
 
   // If in edit mode, fetch the material details
@@ -215,6 +269,22 @@ const AddMaterialPage = () => {
             otherUnitId: materialData.otherUnitId,
             materialForUse: materialData.materialForUse
           });
+
+          if (materialData.materialImageUrl && materialData.materialId) {
+            const imageFile = await convertImageUrlToFile(
+              materialData.materialImageUrl,
+              materialData.materialId,
+              `material-${materialData.materialId}-image.jpg`
+            );
+
+            if (imageFile) {
+              setOriginalImageFile(imageFile);
+              setFormData(prev => ({
+                ...prev,
+                image:imageFile
+              }));
+            }
+          }
           
         } catch (err) {
           if (isInitialLoad.current) {
@@ -420,7 +490,7 @@ const handleOtherUnitChange = (e) => {
           )}
 
           {/* Add/Edit Material Form */}
-          <div className="bg-white rounded-lg shadow-lg p-6">
+          <div className="bg-white rounded-lg shadow-lg">
             {/* Tabs */}
             <div className="flex">
               <button 
@@ -448,10 +518,9 @@ const handleOtherUnitChange = (e) => {
                 Stock Control
               </button>
             </div>
-            <hr className='mt-2 mb-5'/>
             {/* Tab Content - General Information */}
             {activeTab === 'generalInfo' && (
-              <div className="max-h-[calc(100vh-340px)] overflow-y-auto" style={{
+              <div className="max-h-[calc(100vh-340px)] overflow-y-auto p-6" style={{
                           scrollbarWidth: 'thin',
                           scrollbarColor: ' #3B50DF #D9D9D9'
                         }}>
@@ -491,13 +560,13 @@ const handleOtherUnitChange = (e) => {
                             </div>
                             </div>
                             <input
-                            type="text"
-                            id="sku"
-                            name="sku"
-                            required
-                            value={formData.sku}
-                            onChange={handleChange}
-                            className="mt-1 block w-full bg-blue-50 border border-transparent rounded-md shadow-sm px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                              type="text"
+                              id="sku"
+                              name="sku"
+                              required
+                              value={formData.sku}
+                              onChange={handleChange}
+                              className="mt-1 block w-full bg-blue-50 border border-transparent rounded-md shadow-sm px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                             />
                         </div>
                       </div>
@@ -573,13 +642,13 @@ const handleOtherUnitChange = (e) => {
                                   alt="Preview" 
                                   className="max-h-full max-w-full object-contain"
                                 />
-                              ) : (
+                              ) : formData.imageUrl && formData.brandId && !imageChanged ? (
                                 <img 
                                   src={`http://localhost:8080/api/synexis/material/image/${formData.materialId}`} 
                                   alt="Preview" 
                                   className="max-h-full max-w-full object-contain"
                                 />
-                              )}
+                              ) : null}
                             </div>
                             
                             <div className="flex justify-between items-center w-full">
@@ -634,7 +703,7 @@ const handleOtherUnitChange = (e) => {
             
             {/* Tab Content - Classification */}
             {activeTab === 'classification' && (
-              <div className="p-4 text-center text-gray-500">
+              <div className="p-6 text-center text-gray-500">
                 <form className="space-y-6">
                     <div className="flex space-x-36">
                         {/* Inventory Type Field */}
@@ -672,31 +741,56 @@ const handleOtherUnitChange = (e) => {
                                 <option value="BUSBAR">Bus Bar</option>
                                 <option value="WIRING">Wiring</option>
                                 <option value="OTHER_ACCESSORIES">Other Accessories</option>
+                                <option value="ELECTRICAL_LABOR">Electrical Labor</option>
+                                <option value="TRANSPORT">Transport</option>
                                 <option value="ENCLOSURE">Enclosure</option>
                             </select>
                         </div>
                         {/* Brand Field */}
-                        <div className='space-y-1'>
-                            <label htmlFor="materialBrand" className="flex text-black items-center">
+                        <div className='space-y-1 relative'>
+                          <label htmlFor="materialBrand" className="flex text-black items-center">
                             Brand<span className="text-red-500">*</span>
-                            </label>
-                            <select
-                                id='materialBrand'
-                                value={formData.brandId}
-                                onChange={handleBrandChange} //Should be check in backend integration
-                                className="py-2 bg-[#E3F0FF] w-[250px] rounded focus:outline-none"
-                                required
-                            >
-                                <option value="">Select Brand</option>
-                                {brands
-                                    .filter(brand => brand && brand.brandId && brand.brandName) // Filter out null/undefined brands
-                                    .map(brand => (
-                                        <option key={brand.brandId} value={brand.brandId}>
-                                            {brand.brandName}
-                                        </option>
-                                    ))
-                                }
-                            </select>
+                          </label>
+                          <div className="relative">
+                            <input
+                              type="text"
+                              id="materialBrand"
+                              autoComplete='off'
+                              value={brandSearchTerm}
+                              onChange={(e) => {
+                                setBrandSearchTerm(e.target.value);
+                                setShowBrandDropdown(true);
+                              }}
+                              onFocus={() => setShowBrandDropdown(true)}
+                              onBlur={() => setTimeout(() => setShowBrandDropdown(false), 200)}
+                              className="py-2 bg-blue-50 w-[250px] rounded focus:outline-none px-3"
+                              placeholder="Search brand..."
+                            />
+                            {showBrandDropdown && (
+                              <div className="absolute z-10 mt-1 w-full bg-white shadow-lg rounded-md border border-gray-200 max-h-60 overflow-auto">
+                                {brands.length > 0 ? (
+                                  brands.map((brand) => (
+                                    <div
+                                      key={brand.brandId}
+                                      className="px-4 py-2 text-left hover:bg-gray-100 cursor-pointer"
+                                      onClick={() => {
+                                        setFormData(prev => ({
+                                          ...prev,
+                                          brandId: brand.brandId
+                                        }));
+                                        setBrandSearchTerm(brand.brandName);
+                                        setShowBrandDropdown(false);
+                                      }}
+                                    >
+                                      {brand.brandName}
+                                    </div>
+                                  ))
+                                ) : (
+                                  <div className="px-4 py-2 text-gray-500">No brands found</div>
+                                )}
+                              </div>
+                            )}
+                          </div>
                         </div>
                     </div>
                     <div className="flex space-x-36">
@@ -705,45 +799,92 @@ const handleOtherUnitChange = (e) => {
                             <label htmlFor="materialCategory" className="flex text-black items-center">
                             Category<span className="text-red-500">*</span>
                             </label>
-                            <select
+                            <div className='relative'>
+                              <input
+                                type='text'
                                 id='materialCategory'
-                                value={formData.parentCategoryId}
-                                onChange={handleCategoryChange} //Should be check in backend integration
-                                className="py-2 bg-[#E3F0FF] w-[250px] rounded focus:outline-none"
-                                required
-                            >
-                                <option value="">Select Category</option>
-                                {Categories
-                                    .filter(category => category && category.categoryId && category.categoryName)
-                                    .map(category => (
-                                        <option key={category.categoryId} value={category.categoryId}>
-                                            {category.categoryName}
-                                        </option>
+                                autoComplete='off'
+                                value={parentCategorySearchTerm}
+                                onChange={(e) => {
+                                  setParentCategorySearchTerm(e.target.value);
+                                  setShowParentCategoryDropdown(true);
+                                }}
+                                onFocus={() => setShowParentCategoryDropdown(true)}
+                                onBlur={() => setTimeout(() => setShowParentCategoryDropdown(false), 200)}
+                                className="py-2 bg-blue-50 w-[250px] rounded focus:outline-none px-3"
+                                placeholder="Search parent category..."
+                              />
+                              {showParentCategoryDropdown && (
+                                <div className="absolute z-10 mt-1 w-full bg-white shadow-lg rounded-md border border-gray-200 max-h-60 overflow-auto">
+                                  {categories.length > 0 ? (
+                                    categories.map((category) => (
+                                      <div
+                                        key={category.parentCategoryId}
+                                        className='px-4 py-2 text-left hover:bg-gray-100 cursor-pointer'
+                                        onClick={() => {
+                                          setFormData(prev => ({
+                                            ...prev,
+                                            parentCategoryId: category.parentCategoryId
+                                          }));
+                                          setParentCategorySearchTerm(category.parentCategoryName);
+                                          setShowParentCategoryDropdown(false);
+                                        }}
+                                      >
+                                        {category.parentCategoryName}
+                                      </div>
                                     ))
-                                }
-                            </select>
+                                  ):(
+                                    <div className="px-4 py-2 text-gray-500">No category found</div>
+                                  )}
+                                  </div>
+                              )}
+                            </div>             
                         </div>
                         {/* Sub Category Field */}
                         <div className='space-y-1'>
                             <label htmlFor="materialSubCategory" className="flex text-black items-center">
                             Sub Category<span className="text-red-500">*</span>
                             </label>
-                            <select
-                                id='materialSuCategory'
-                                value={formData.subCategoryId}
-                                onChange={handleSubCategoryChange} //Should be check in backend integration
-                                className="py-2 bg-[#E3F0FF] w-[250px] rounded focus:outline-none"
-                                required
-                            >
-                                <option value="">Select Category</option>
-                                {SubCategories                            
-                                    .map(subCategory => (
-                                        <option key={subCategory.categoryId} value={subCategory.categoryId}>
-                                            {subCategory.categoryName}
-                                        </option>
+                            <div className="relative">
+                              <input
+                                type='text'
+                                id='materialSubCategory'
+                                autoComplete='off'
+                                value={subCategorySearchTerm}
+                                onChange={(e) => {
+                                  setSubCategorySearchTerm(e.target.value);
+                                  setShowSubCategoryDropDown(true);
+                                }}
+                                onFocus={() => setShowSubCategoryDropDown(true)}
+                                onBlur={() => setTimeout(() => setShowSubCategoryDropDown(false), 200)}
+                                className="py-2 bg-blue-50 w-[250px] rounded focus:outline-none px-3"
+                                placeholder='Search sub category...'
+                              />
+                              {showSubCategoryDropDown && (
+                                <div className="absolute z-10 mt-1 w-full bg-white shadow-lg rounded-md border border-gray-200 max-h-60 overflow-auto">
+                                  {subCategories.length > 0 ? (
+                                    subCategories.map((subCategory) => (
+                                      <div
+                                        key={subCategory.categoryId}
+                                        className='px-4 py-2 text-left hover:bg-gray-100 cursor-pointer'
+                                        onClick={() => {
+                                          setFormData(prev => ({
+                                            ...prev,
+                                            subCategoryId: subCategory.categoryId
+                                          }));
+                                          setSubCategorySearchTerm(subCategory.categoryName); // Add this line
+                                          setShowSubCategoryDropDown(false);
+                                        }}
+                                      >
+                                        {subCategory.categoryName}
+                                      </div>
                                     ))
-                                }
-                            </select>
+                                  ):(
+                                    <div className="px-4 py-2 text-gray-500">No sub category found</div>
+                                  )}
+                                  </div>
+                              )}
+                            </div>        
                         </div>
                         {/* Make Field */}
                         <div>
@@ -756,7 +897,6 @@ const handleOtherUnitChange = (e) => {
                               type="text"
                               id="make"
                               name="make"
-                              required
                               value={formData.make}
                               onChange={handleChange}
                               className="mt-1 block w-[250px] bg-[#E3F0FF] border border-transparent rounded-md shadow-sm px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
@@ -768,7 +908,7 @@ const handleOtherUnitChange = (e) => {
             )}
             
             {activeTab === 'pricing' && (
-              <div className="p-4 text-center text-gray-500">
+              <div className="p-6 text-center text-gray-500">
                <form  className="space-y-6">
                 <div className='flex space-x-36'>
                     {/* Purchase Price Field */}
@@ -825,7 +965,7 @@ const handleOtherUnitChange = (e) => {
             )}
             
             {activeTab === 'stockControl' && (
-              <div className="p-4 text-center text-gray-500">
+              <div className="p-6 text-center text-gray-500">
                <form  className="space-y-6">
                 <div className='flex space-x-36'>
                     {/* Alert Quantity Field */}
@@ -846,7 +986,6 @@ const handleOtherUnitChange = (e) => {
                           type="number"
                           id="alertQuantity"
                           name="alertQuantity"
-                          required
                           value={formData.alertQuantity}
                           onChange={handleChange}
                           className="mt-1 block w-full bg-blue-50 border border-transparent rounded-md shadow-sm px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
@@ -857,48 +996,95 @@ const handleOtherUnitChange = (e) => {
                       <label htmlFor="materialBaseUnit" className="flex text-black items-center">
                         Base Unit<span className="text-red-500">*</span>
                       </label>
-                        <select
+                      <div className="relative">
+                        <input
+                          type='text'
                           id='materialBaseUnit'
-                          value={formData.baseUnitId}
-                          onChange={handleBaseUnitChange} //Should be check in backend integration
-                          className="py-2 bg-[#E3F0FF] w-[250px] rounded focus:outline-none"
-                          required
-                        >
-                          <option value="">Select Base Unit</option>
-                            {BaseUnits
-                              .filter(baseUnit => baseUnit.baseUnitId && baseUnit.baseUnitName)
-                              .map(baseUnit => (
-                                <option key={baseUnit.baseUnitId} value={baseUnit.baseUnitId}>
+                          autoComplete='off'
+                          value={baseUnitSearchterm}
+                          onChange={(e) => {
+                            setBaseUnitSearchTerm(e.target.value);
+                            setShowBaseUnitDropdown(true);
+                          }}
+                          onFocus={() => setShowBaseUnitDropdown(true)}
+                          onBlur={() => setTimeout(() => setShowBaseUnitDropdown(false), 200)}
+                          className="py-2 bg-blue-50 w-[250px] rounded focus:outline-none px-3"
+                          placeholder='Search base unit...'
+                        />
+                        {showBaseUnitDropdown && (
+                          <div className="absolute z-10 mt-1 w-full bg-white shadow-lg rounded-md border border-gray-200 max-h-60 overflow-auto">
+                            {baseUnits.length > 0 ? (
+                              baseUnits.map((baseUnit) => (
+                                <div
+                                  key={baseUnit.baseUnitId}
+                                  className='px-4 py-2 text-left hover:bg-gray-100 cursor-pointer'
+                                  onClick={() => {
+                                    setFormData(prev => ({
+                                      ...prev,
+                                      baseUnitId: baseUnit.baseUnitId
+                                    }));
+                                    setBaseUnitSearchTerm(baseUnit.baseUnitName);
+                                    setShowBaseUnitDropdown(false);
+                                  }}
+                                >
                                   {baseUnit.baseUnitName}
-                                </option>
+                                </div>
                               ))
-                            }
-                        </select>
+                            ) : (
+                              <div className="px-4 py-2 text-gray-500">No base unit found</div>
+                            )}
+                          </div>
+                        )}
+                      </div>  
                     </div>
+
                     {/* Other Unit Field */}
-                    <div>
+                    <div className='relative'>
                       <label htmlFor="materialOtherUnit" className="flex text-black items-center">
                         Other Unit<span className="text-red-500">*</span>
                       </label>
-                        <select
+                      <div className="relative">
+                        <input
+                          type='text'
                           id='materialOtherUnit'
-                          value={formData.otherUnitId}
-                          onChange={handleOtherUnitChange} 
-                          className="py-2 bg-[#E3F0FF] w-[250px] rounded focus:outline-none"
-                          
-                        >
-                          <option value="">Select Other Unit</option>
-                            {OtherUnits
-                              .filter(otherUnit => otherUnit.otherUnitId && otherUnit.otherUnitName)
-                              .map(otherUnit => (
-                                <option key={otherUnit.otherUnitId} value={otherUnit.otherUnitId}>
+                          autoComplete='off'
+                          value={otherUnitSearchTerm}
+                          onChange={(e) => {
+                            setOtherUnitSearchTerm(e.target.value);
+                            setShowOtherUnitDropDown(true);
+                          }} 
+                          onFocus={() => setShowOtherUnitDropDown(true)}
+                          onBlur={() => setTimeout(() => setShowOtherUnitDropDown(false), 200)}
+                          className="py-2 bg-blue-50 w-[250px] rounded focus:outline-none px-3"
+                          placeholder='Search other unit...'
+                        />
+                        {showOtherUnitDropDown && (
+                          <div className="absolute z-10 mt-1 w-full bg-white shadow-lg rounded-md border border-gray-200 max-h-60 overflow-auto">
+                            {otherUnits.length > 0 ? (
+                              otherUnits.map((otherUnit) => (
+                                <div
+                                  key={otherUnit.otherUnitId}
+                                  className='px-4 py-2 text-left hover:bg-gray-100 cursor-pointer'
+                                  onClick={() => {
+                                    setFormData(prev => ({
+                                      ...prev,
+                                      otherUnitId: otherUnit.otherUnitId
+                                    }));
+                                    setOtherUnitSearchTerm(otherUnit.otherUnitName);
+                                    setShowOtherUnitDropDown(false);
+                                  }}
+                                >
                                   {otherUnit.otherUnitName}
-                                </option>
+                                </div> 
                               ))
-                            }
-                        </select>
+                            ) : (
+                              <div className="px-4 py-2 text-gray-500">No other unit found</div>
+                            )}
+                          </div>
+                        )}
+                      </div>
                     </div>
-                </div>
+                  </div>
                 <div>
                 {/*Eligible for production */}
                 <div className="flex items-center mt-4">

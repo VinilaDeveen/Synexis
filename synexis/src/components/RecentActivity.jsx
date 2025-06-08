@@ -51,8 +51,8 @@ const RecentActivitiesPanel = ({ isVisible, activities, onClose }) => {
               {activities.map((activity, index) => (
                 <tr key={index} className="border-b border-gray-200">
                   <td className="py-3">
-                    <div className="flex text-sm">
-                      <div className="w-[110px]">{activity.entityName}</div>
+                    <div className="grid grid-row text-sm">
+                      <div className="w-[110px] font-medium">{activity.entityName}</div>
                       <div className="w-[90px]">{activity.actLogAction} -</div>
                       <div className="w-[100px]">{activity.actLogPerformedBy}</div>
                     </div>

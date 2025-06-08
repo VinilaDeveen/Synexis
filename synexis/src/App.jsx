@@ -27,8 +27,12 @@ import AddCostEstimationPage from "./pages/AddCostEstimation";
 import CostEstimationViewPage from "./pages/CostEstimationView";
 import AddCostEstimationNewVersionPage from "./pages/AddCostEstimationNewVersion";
 import AppFlow from "./pages/AppFlow";
-//import AddJobPage from "./pages/AddJob";
+import AddJobPage from "./pages/AddJob";
 import JobPage from "./pages/Job";
+import JobView from "./pages/JobView";
+import JobApprovalPage from "./pages/JobApproval";
+//import BillofQuantityPage from "./pages/BillofQuantity";
+//import BOQPage from "./pages/BOQ";
 
 function App() {
 
@@ -40,48 +44,54 @@ function App() {
           <Route path="/" element={<AppFlow />} />
 
           <Route path="/inventory/category" element={<CategoryPage />} />
-          <Route path="/inventory/addcategory" element={<AddCategoryPage />} />
-          <Route path="/inventory/editCategory/:id" element={<AddCategoryPage />} />
-          <Route path="/inventory/categoryView/:id" element={<CategoryView />} />
+          <Route path="/inventory/category/addcategory" element={<AddCategoryPage />} />
+          <Route path="/inventory/category/editCategory/:id" element={<AddCategoryPage />} />
+          <Route path="/inventory/category/categoryView/:id" element={<CategoryView />} />
 
           <Route path="/inventory/brand" element={<BrandPage />} />
-          <Route path="/inventory/addbrand" element={<AddBrandPage />} />
-          <Route path="/inventory/editBrand/:id" element={<AddBrandPage />} />
-          <Route path="/inventory/brandView/:id" element={<BrandView />} />
+          <Route path="/inventory/brand/addbrand" element={<AddBrandPage />} />
+          <Route path="/inventory/brand/editBrand/:id" element={<AddBrandPage />} />
+          <Route path="/inventory/brand/brandView/:id" element={<BrandView />} />
 
           <Route path="/inventory/unit" element={<UnitPage />} />
-          <Route path="/inventory/addunit" element={<AddUnitPage />} />
-          <Route path="/inventory/editunit/:id" element={<AddUnitPage />} />
-          <Route path="/inventory/unitView/:id" element={<UnitView />} />
+          <Route path="/inventory/unit/addunit" element={<AddUnitPage />} />
+          <Route path="/inventory/unit/editunit/:id" element={<AddUnitPage />} />
+          <Route path="/inventory/unit/unitView/:id" element={<UnitView />} />
 
           <Route path="/inventory/material" element={<MaterialPage />} />
-          <Route path="/inventory/addmaterial" element={<AddMaterialPage />} />
-          <Route path="/inventory/editmaterial/:id" element={<AddMaterialPage />} />
-          <Route path="/inventory/materialView/:id" element={<MaterialView />} />
+          <Route path="/inventory/material/addmaterial" element={<AddMaterialPage />} />
+          <Route path="/inventory/material/editmaterial/:id" element={<AddMaterialPage />} />
+          <Route path="/inventory/material/materialView/:id" element={<MaterialView />} />
 
           <Route path="/people/employee" element={<EmployeePage />} />
-          <Route path="/people/addemployee" element={<AddEmployeePage />} />
-          <Route path="/people/editemployee/:id" element={<AddEmployeePage />} />
-          <Route path="/people/employeeView/:id" element={<EmployeeView />} />
+          <Route path="/people/employee/addemployee" element={<AddEmployeePage />} />
+          <Route path="/people/employee/editemployee/:id" element={<AddEmployeePage />} />
+          <Route path="/people/employee/employeeView/:id" element={<EmployeeView />} />
 
           <Route path="/people/customer" element={<CustomerPage />} />
-          <Route path="/people/addcustomer" element={<AddCustomerPage />} />
-          <Route path="/people/editcustomer/:id" element={<AddCustomerPage />} />
-          <Route path="/people/customerView/:id" element={<CustomerView />} />
+          <Route path="/people/customer/addcustomer" element={<AddCustomerPage />} />
+          <Route path="/people/customer/editcustomer/:id" element={<AddCustomerPage />} />
+          <Route path="/people/customer/customerView/:id" element={<CustomerView />} />
 
           <Route path="/estimation/inquiry" element={<InquiryPage />} />
-          <Route path="/estimation/addinquiry" element={<AddInquiriesPage />} />
-          <Route path="/estimation/editinquiry/:id" element={<AddInquiriesPage />} />
-          <Route path="/estimation/inquiryView/:id" element={<InquiryViewPage />} />
+          <Route path="/estimation/inquiry/addinquiry" element={<AddInquiriesPage />} />
+          <Route path="/estimation/inquiry/editinquiry/:id" element={<AddInquiriesPage />} />
+          <Route path="/estimation/inquiry/inquiryView/:id" element={<InquiryViewPage />} />
 
-          <Route path="/estimation/addCostEstimation/:inquiryId" element={<AddCostEstimationPage/>} />
-          <Route path="/estimation/costEstimation/:inquiryId" element={<CostEstimationPage/>} />
-          <Route path="/estimation/editCostEstimation/:inquiryId/:id" element={<AddCostEstimationPage/>} />
-          <Route path="/estimation/costEstimationView/:inquiryId/:id" element={<CostEstimationViewPage/>} />
-          <Route path="/estimation/createCostEstimation/:inquiryId/:id" element={<AddCostEstimationNewVersionPage/>} />
+          <Route path="/estimation/costEst/addCostEstimation/:inquiryId" element={<AddCostEstimationPage/>} />
+          <Route path="/estimation/costEst/costEstimation/:inquiryId" element={<CostEstimationPage/>} />
+          <Route path="/estimation/costEst/editCostEstimation/:inquiryId/:id" element={<AddCostEstimationPage/>} />
+          <Route path="/estimation/costEst/costEstimationView/:inquiryId/:id" element={<CostEstimationViewPage/>} />
+          <Route path="/estimation/costEst/createCostEstimation/:inquiryId/:id" element={<AddCostEstimationNewVersionPage/>} />
 
           <Route path="/project/job" element={<JobPage />} />
-          {/*<Route path="/estimation/jobRegistration/:estimationId" element={<AddJobPage/>} />*/}
+          <Route path="/project/approvalJob" element={<JobApprovalPage />} />
+          <Route path="/project/job/jobRegistration/:estimationId" element={<AddJobPage/>} />
+          <Route path="/project/job/editjobRegistration/:id" element={<AddJobPage/>} />
+          <Route path="/project/job/jobView/:id" element={<JobView />} />
+
+          {/*<Route path="/project/boq1" element={<BillofQuantityPage />} />
+          <Route path="/project/boq" element={<BOQPage />} />*/}
         </Routes>
       </NotificationProvider>
     </Router>

@@ -169,7 +169,7 @@ const CategoryPage = () => {
   };
 
   const handleEditCategory = (id) => {
-    navigate(`/inventory/editCategory/${id}`);
+    navigate(`/inventory/category/editCategory/${id}`);
   };
 
   const handleDeleteCategory = (id) => {
@@ -234,7 +234,7 @@ const CategoryPage = () => {
           <MdDelete size={isMobile ? 16 : 18} />
         </div>
         <Link 
-          to={`/inventory/categoryView/${params.id}`} 
+          to={`/inventory/category/categoryView/${params.id}`} 
           state={{ selectedCategoryId: params.id }}
         >
           <div 
@@ -365,7 +365,7 @@ const CategoryPage = () => {
                   />
                 </div>
               </div>
-              <Link to="/inventory/addCategory">
+              <Link to="/inventory/category/addCategory">
                 <button 
                   onClick={handleAddCategory}
                   className="bg-[#3C50E0] hover:bg-blue-700 text-white px-3 py-2 text-sm rounded-lg flex items-center justify-center sm:justify-start gap-2 focus:outline-none"

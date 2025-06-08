@@ -10,6 +10,7 @@ import {
 import { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { FaEdit, FaEye, FaFilePdf } from "react-icons/fa";
+import { MdOutlineAddHomeWork } from "react-icons/md";
 import { BiSolidDuplicate } from "react-icons/bi";
 import { LuHistory } from "react-icons/lu";
 import { Search, Plus, Menu, ArrowLeft, File } from 'lucide-react';
@@ -23,6 +24,12 @@ import { recentActivityService } from '../services/recentActivityService';
 const CostEstimationPage = () => {
   const { notifySuccess, notifyError, notifyWarning, notifyDefault } = useNotification();
   const [costEstimations, setCostEstimations] = useState({
+    inquiryId: null,
+    quotationNumber: '',
+    estimations: []
+  });
+
+  const [costEstimationsApprovals, setCostEstimationsApprovals] = useState({
     inquiryId: null,
     quotationNumber: '',
     estimations: []
@@ -129,39 +136,42 @@ const CostEstimationPage = () => {
   // Fetch approval estimations when approvals tab is active
   useEffect(() => {
     const fetchApprovalEstimations = async () => {
-    if (activeTab !== 'approvals') return;
-    
-    try {
-      setLoading(true);
+      if (activeTab !== 'approvals') return;
       
-      // Use the existing costEstimations data instead of making a new API call
-      const estimations = costEstimations.estimations || [];
-      
-      // Transform the data to match the approvalEstimations structure
-      const approvalData = estimations.map(est => ({
-        id: est.estimationId,
-        quotationNumber: est.quotationVersion,
-        date: est.lastModifiedDate,
-        status: est.estimationStatus,
-        // Add any other required fields for approvals
-      }));
-      
-      // Check if there's already an accepted version
-      const acceptedExists = estimations.some(est => est.estimationStatus === 'ACCEPTED');
-      
-      setApprovalEstimations(approvalData);
-      setHasAcceptedVersion(acceptedExists);
-      setLoading(false);
-      
-    } catch (error) {
-      console.error('Error processing approval estimations:', error);
-      notifyError(`Failed to load approval estimations: ${error.message || 'Unknown error'}`);
-      setLoading(false);
-    }
-  };
+      try {
+        setLoading(true);
+        
+        // Get approval estimations from API
+        const costEstimationsApprovalResponse = await costEstimationService.getAllApprovalEstimation(inquiryId);
+        console.log(costEstimationsApprovalResponse);
+        if (costEstimationsApprovalResponse && costEstimationsApprovalResponse.data) {
+          // Transform the data to match the approvalEstimations structure
+          const approvalData = costEstimationsApprovalResponse.data.estimations.map(est => ({
+            id: est.estimationId,
+            quotationNumber: est.quotationVersion,
+            date: est.lastModifiedDate,
+            status: est.estimationStatus,
+            // Add any other required fields for approvals
+          }));
+          
+          // Check if there's already an accepted version
+          const acceptedExists = approvalData.some(est => est.status === 'ACCEPTED');
+          
+          setApprovalEstimations(approvalData);
+          setHasAcceptedVersion(acceptedExists);
+          setCostEstimationsApprovals(costEstimationsApprovalResponse.data);
+        }
+        
+        setLoading(false);
+      } catch (error) {
+        console.error('Error processing approval estimations:', error);
+        notifyError(`Failed to load approval estimations: ${error.message || 'Unknown error'}`);
+        setLoading(false);
+      }
+    };
 
     fetchApprovalEstimations();
-  }, [activeTab]);
+  }, [activeTab, inquiryId]);
 
   // We need to check loading state before returning the full component
   if (loading && activeTab === 'quotations') {
@@ -222,24 +232,24 @@ const CostEstimationPage = () => {
   // Quotations tab handlers
   const handleAddVersion = (id) => {
     console.log("Add version clicked");
-    navigate(`/estimation/createCostEstimation/${inquiryId}/${id}`);
+    navigate(`/estimation/costEst/createCostEstimation/${inquiryId}/${id}`);
     notifySuccess('Creating new cost estimation version');
   };
 
   const handleAddQuotation = () => {
     console.log("Add quotation clicked");
-    navigate(`/estimation/addCostEstimation/${inquiryId}`);
+    navigate(`/estimation/costEst/addCostEstimation/${inquiryId}`);
     notifySuccess('Creating new cost estimation version');
   };
 
   const handleEditEstimation = (id) => {
-    navigate(`/estimation/editCostEstimation/${inquiryId}/${id}`);
+    navigate(`/estimation/costEst/editCostEstimation/${inquiryId}/${id}`);
     console.log(`Edit cost estimation ${id} clicked`);
   };
   
   const handleViewEstimation = (id) => {
     console.log(`View cost estimation ${id} clicked`);
-    navigate(`/estimation/costEstimationView/${inquiryId}/${id}`);
+    navigate(`/estimation/costEst/costEstimationView/${inquiryId}/${id}`);
   };
 
   const handleExportPDF = (id) => {
@@ -249,7 +259,7 @@ const CostEstimationPage = () => {
 
   const handleJobRegistration = (id) => {
     console.log(`Job registration for cost estimation ${id} clicked`);
-    navigate(`/estimation/jobRegistration/${id}`);
+    navigate(`/project/job/jobRegistration/${id}`);
     notifySuccess(`Proceeding to job registration for accepted quotation #${id}`);
   };
 
@@ -389,10 +399,11 @@ const CostEstimationPage = () => {
         {params.row.status === 'ACCEPTED' && (
           <button
             onClick={() => handleJobRegistration(params.id)}
-            className="ml-2 bg-[#3C50E0] hover:bg-green-600 text-white text-xs px-2 py-1 rounded-lg text-center"
+            className="ml-2 bg-[#3C50E0] hover:bg-blue-700 text-white px-2 py-1 text-xs rounded flex items-center gap-1"
             title="Register as Job"
           >
-            Job Registration
+            <MdOutlineAddHomeWork size={16} />
+            <span>Job Registration</span>
           </button>
         )}
       </div>
@@ -564,15 +575,25 @@ const CostEstimationPage = () => {
         (est.status && est.status.toLowerCase().includes(searchTerm.toLowerCase())) ||
         (est.date && est.date.toLowerCase().includes(searchTerm.toLowerCase()))
       );
+
+      // Prepare data for DataGrid - Approvals tab
+  const approvalRows = costEstimationsApprovals.estimations ? 
+    costEstimationsApprovals.estimations.map(est => ({
+      id: est.estimationId,
+      quotationNumber: est.quotationVersion,
+      date: est.lastModifiedDate,
+      status: est.estimationStatus,
+    })) : [];
   
   // Filter approval estimations based on search term
-  const filteredApprovalEstimations = searchTerm.trim() === '' 
-    ? approvalEstimations 
-    : approvalEstimations.filter(est => 
-        (est.quotationNumber && est.quotationNumber.toLowerCase().includes(searchTerm.toLowerCase())) ||
-        (est.status && est.status.toLowerCase().includes(searchTerm.toLowerCase())) ||
-        (est.date && est.date.toLowerCase().includes(searchTerm.toLowerCase()))
-      );
+  // Filter approval estimations based on search term
+const filteredApprovalEstimations = searchTerm.trim() === '' 
+  ? approvalRows 
+  : approvalRows.filter(est => 
+      (est.quotationNumber && est.quotationNumber.toLowerCase().includes(searchTerm.toLowerCase())) ||
+      (est.status && est.status.toLowerCase().includes(searchTerm.toLowerCase())) ||
+      (est.date && est.date.toLowerCase().includes(searchTerm.toLowerCase()))
+    );
   
   // Prepare data for DataGrid - Quotations tab
   const quotationRows = filteredEstimations.estimations ? filteredEstimations.estimations.map(est => ({
@@ -582,13 +603,8 @@ const CostEstimationPage = () => {
     date: est.lastModifiedDate,
   })) : [];
 
-  // Prepare data for DataGrid - Approvals tab
-  const approvalRows = filteredApprovalEstimations.map(estimation => ({
-    id: estimation.id,
-    quotationNumber: estimation.quotationNumber,
-    date: estimation.date,
-    status: estimation.status,
-  }));
+
+  
 
   return (
     <div className="flex w-screen h-screen text-black bg-gray-100 overflow-hidden">

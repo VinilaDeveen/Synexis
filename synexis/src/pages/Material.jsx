@@ -235,23 +235,23 @@ const MaterialPage = () => {
   };
   
   const handleAddMaterial = () => {
-    navigate('/inventory/addMaterial');
+    navigate('/inventory/material/addMaterial');
     notifyDefault('Add Material page coming soon');
   };
 
   const handleEditMaterial = (id) => {
-    navigate(`/inventory/editMaterial/${id}`);
+    navigate(`/inventory/material/editMaterial/${id}`);
     notifyDefault(`Edit Material ID: ${id} page coming soon`);
   };
 
-  const handleDeleteMaterial = (id) => {
+  const handleDeleteMaterial = async (id) => {
     try {
       // Find the material being deleted
       const materialToDelete = materials.find(material => material.materialId === id);
       const materialName = materialToDelete?.name || 'Material';
       
       // Simulate API call for deletion
-      // materialService.delete(id);
+      await materialService.delete(id);
       notifySuccess(`Material "${materialName}" successfully deleted`);
     } catch (error) {
       notifyError(`Error deleting material: ${error.message || 'Unknown error'}`);
@@ -315,7 +315,7 @@ const MaterialPage = () => {
           <MdDelete size={isMobile ? 16 : 18} />
         </div>
         <Link 
-          to={`/inventory/materialView/${params.id}`} 
+          to={`/inventory/material/materialView/${params.id}`} 
           state={{ selectedMaterialId: params.id }}
         >
           <div 

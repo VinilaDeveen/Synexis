@@ -1,5 +1,6 @@
 import Navbar from '../components/Navbar';
 import Sidebar from '../components/Sidebar';
+import InactiveCategoryWarning from '../components/WarningWidget';
 import { 
   FullPageLoader, 
   InlineLoader, 
@@ -32,6 +33,7 @@ const CategoryView = () => {
   });
   const [loading, setLoading] = useState(false);
   const [categoryLoading, setCategoryLoading] = useState(false);
+  const [activateLoading, setActivateLoading] = useState(false);
   const isInitialLoad = useRef(true);
   const isInitialLoad1 = useRef(true);
   
@@ -191,7 +193,7 @@ const CategoryView = () => {
 
   // Handle category selection and update URL
   const handleCategorySelect = (category) => {
-    navigate(`/inventory/categoryView/${category.categoryId}`, { 
+    navigate(`/inventory/category/categoryView/${category.categoryId}`, { 
       state: { selectedCategoryId: category.categoryId },
       replace: true 
     });
@@ -296,7 +298,7 @@ const CategoryView = () => {
   };
 
   const handleEditToCategory = () => {
-    navigate(`/inventory/editCategory/${selectedCategoryId}`);
+    navigate(`/inventory/category/editCategory/${selectedCategoryId}`);
   };
 
   const handleDeleteCategory = async () => {
@@ -316,9 +318,45 @@ const CategoryView = () => {
     }
   };
 
+  // Handle category activation
+  const handleActivateCategory = async () => {
+    if (!selectedCategoryId) return;
+
+    try {
+      setActivateLoading(true);
+      await categoryService.activate(selectedCategoryId);
+      
+      // Update the selected category status locally
+      setSelectedCategory(prev => ({
+        ...prev,
+        categoryStatus: 'ACTIVE'
+      }));
+      
+      // Also update in the categories list
+      setCategories(prev => 
+        prev.map(cat => 
+          cat.categoryId === selectedCategoryId 
+            ? { ...cat, categoryStatus: 'ACTIVE' }
+            : cat
+        )
+      );
+      
+      notifySuccess(`Category "${selectedCategory.mainCategoryName ? selectedCategory.mainCategoryName : selectedCategory.categoryName}" has been activated successfully`);
+    } catch (error) {
+      notifyError(`Error activating category: ${error.message || 'Unknown error'}`);
+    } finally {
+      setActivateLoading(false);
+    }
+  };
+
   // Determine if category is a subcategory
   const isSubcategory = (category) => {
     return category && category.categoryName && category.mainCategoryName && category.categoryName !== category.mainCategoryName;
+  };
+
+  // Check if category is inactive
+  const isCategoryInactive = () => {
+    return selectedCategory && selectedCategory.categoryStatus?.toUpperCase() === 'INACTIVE';
   };
 
   return (
@@ -434,6 +472,18 @@ const CategoryView = () => {
                   </div>
                 </div>
 
+                {/* Inactive Category Warning Widget */}
+                {isCategoryInactive() && (
+                  <InactiveCategoryWarning 
+                    title = "Category Inactive"
+                    entity={'Category'}
+                    entityName={`${selectedCategory.categoryName}`}
+                    onActivate={handleActivateCategory}
+                    loading={activateLoading}
+                    className="mb-4"
+                  />
+                )}
+
                 {/* Category Content with Loading State */}
                 {categoryLoading ? (
                   <ContentLoader/>
@@ -458,7 +508,7 @@ const CategoryView = () => {
                     {/* Tab Content */}
                     <div className="p-6">
                       {activeTab === 'overview' ? (
-                        <div className="max-h-[calc(100vh-270px)] overflow-y-auto" style={{
+                        <div className={`overflow-y-auto ${selectedCategory.categoryStatus === 'INACTIVE' ? "max-h-[calc(100vh-360px)]" : "max-h-[calc(100vh-270px)]"}`} style={{
                           scrollbarWidth: 'thin',
                           scrollbarColor: '#3B50DF #D9D9D9'
                         }}>
@@ -480,7 +530,13 @@ const CategoryView = () => {
                               </div>
                               <div className="flex">
                                 <span className="w-32 text-gray-400">Status</span>
-                                <span>{selectedCategory.categoryStatus?.toLowerCase()}</span>
+                                <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                                  selectedCategory.categoryStatus?.toUpperCase() === 'ACTIVE' 
+                                    ? 'bg-green-100 text-green-800' 
+                                    : 'bg-red-100 text-red-800'
+                                }`}>
+                                  {selectedCategory.categoryStatus?.toLowerCase()}
+                                </span>
                               </div>
                               {selectedCategory.parentCategoryName && (
                                 <div className="flex">
@@ -537,7 +593,7 @@ const CategoryView = () => {
                           )}
                         </div>
                       ) : (
-                        <div className="max-h-[calc(100vh-260px)] overflow-y-auto" style={{
+                        <div className={`overflow-y-auto ${selectedCategory.categoryStatus === 'INACTIVE' ? "max-h-[calc(100vh-340px)]" : "max-h-[calc(100vh-270px)]"}`} style={{
                           scrollbarWidth: 'thin',
                           scrollbarColor: '#3B50DF #D9D9D9'
                         }}>

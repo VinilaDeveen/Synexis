@@ -306,37 +306,42 @@ const AddCostEstimationNewVersionPage = () => {
 
           // Initialize sections with materials from backend
           const frontendSections = sections.map(section => {
-            const sectionMaterials = [];
+            const materialMap = {};
             
             // Find all materials that belong to this section
             backendItems.forEach(item => {
+              const itemIndex = frontendItems.findIndex(i => i.id === item.itemId.toString());
+              if (itemIndex === -1) return;
+
               item.itemMaterials.forEach(material => {
                 if (material.sectionId === sectionMap[section.name]) {
-                  // Create quantities array that matches items order
-                  const quantities = new Array(frontendItems.length).fill(0);
-                  const itemIndex = frontendItems.findIndex(i => i.id === item.itemId.toString());
-                
-                  if (itemIndex !== -1) {
-                    quantities[itemIndex] = material.materialQuantity || 0;
+                  const materialId = material.materialId;
+
+                  if (!materialMap[materialId]) {
+                    const quantities = new Array(frontendItems.length).fill(0);
+                    materialMap[materialId] = {
+                      id: materialId,
+                      name: material.materialName,
+                      marketPrice: material.materialMarketPrice || 0,
+                      unitPrice: material.unitPrice || 0,
+                      discount: material.discount || 0,
+                      discountedPrice: (material.unitPrice || 0) * (1 - (material.discount || 0) / 100),
+                      material: material.material || '-',
+                      materialDescription: material.materialDescription || '-',
+                      materialPartNumber: material.materialPartNumber || '-',
+                      materialMake: material.materialMake || '-',
+                      countryOfOrigin: material.materialCountry || '-',
+                      quantities
+                    };
                   }
-                  
-                  sectionMaterials.push({
-                    id: material.materialId,
-                    name: material.materialName,
-                    marketPrice: material.materialMarketPrice || 0,
-                    unitPrice: material.unitPrice || 0,
-                    discount: material.discount || 0,
-                    discountedPrice: (material.unitPrice || 0) * (1 - (material.discount || 0) / 100),
-                    material: material.material || '-',
-                    materialDescription: material.materialDescription || '-',
-                    materialPartNumber: material.materialPartNumber || '-',
-                    materialMake: material.materialMake || '-',
-                    countryOfOrigin: material.materialCountry || '-',
-                    quantities: quantities
-                  });
+                  // Set the quantity for the current item
+                  materialMap[materialId].quantities[itemIndex] = material.materialQuantity || 0;
                 }
               });
             });
+
+            // Convert materialMap to an array
+            const sectionMaterials = Object.values(materialMap);
             
             return {
               ...section,
@@ -484,6 +489,7 @@ const [markupsInitialized, setMarkupsInitialized] = useState(false);
       });
 
       const itemData = {
+        itemId: itemId,
         itemName: itemName,
         itemQuantity: itemQuantity,
         switchGearComponentMarkup: itemMarkups.switchGearComponentMarkup || 0,
@@ -507,7 +513,7 @@ const [markupsInitialized, setMarkupsInitialized] = useState(false);
   
 
   const handleCancel = () => {
-    navigate(`/estimation/costEstimation/${inquiryId}`);
+    navigate(`/estimation/costEst/costEstimation/${inquiryId}`);
   };
 
   const handleSaveAsDraft = async () => {
@@ -518,7 +524,7 @@ const [markupsInitialized, setMarkupsInitialized] = useState(false);
       await costEstimationService.create(exportData);
 
       notifySuccess('Estimation draft created successfully!');
-      navigate(`/estimation/costEstimation/${inquiryId}`);
+      navigate(`/estimation/costEst/costEstimation/${inquiryId}`);
       
     } catch (error) {
       console.error('Export error:', error);
@@ -544,7 +550,7 @@ const [markupsInitialized, setMarkupsInitialized] = useState(false);
       await costEstimationService.create(exportData);
 
       notifySuccess('Estimation created successfully!');
-      navigate(`/estimation/costEstimation/${inquiryId}`);
+      navigate(`/estimation/costEst/costEstimation/${inquiryId}`);
       
     } catch (error) {
       console.error('Export error:', error);
@@ -690,9 +696,19 @@ const [markupsInitialized, setMarkupsInitialized] = useState(false);
   });
 
   // Calculate costs for each section and item
+  const markupFieldName = {
+    'Switch Gear Component': 'switchGearComponentMarkup',
+    'Control Accessories': 'controlAccessoryMarkup',
+    'Bus Bar': 'busBarMarkup',
+    'Wiring': 'wiringMarkup',
+    'Other Accessories': 'otherAccessoryMarkup',
+    'Electrical Labor': 'electricalLabourMarkup',
+    'Transport': 'transportMarkup',
+    'Enclosure': 'enclosureMarkup'
+  };
   sections.forEach(section => {
     const isElectrical = section.name !== 'Enclosure';
-    const sectionMarkupField = `${section.name.replace(/\s+/g, '').toLowerCase()}Markup`;
+    const sectionMarkupField = markupFieldName[section.name];
     
     section.materials.forEach(material => {
       material.quantities.forEach((quantity, itemIndex) => {
@@ -1082,7 +1098,7 @@ const renderLaborRateRow = () => (
   // Render function for Markup percentage input rows
   const renderMarkupRow = (sectionName) => {
   const markupFieldName = {
-    'Switch Gear Components': 'switchGearComponentMarkup',
+    'Switch Gear Component': 'switchGearComponentMarkup',
     'Control Accessories': 'controlAccessoryMarkup',
     'Bus Bar': 'busBarMarkup',
     'Wiring': 'wiringMarkup',
@@ -1210,6 +1226,22 @@ const renderLaborRateRow = () => (
   
   // Create a new item in a specific section with all material details
   const createMaterial = (materialData, sectionId) => {
+
+    if (!materialData.materialId) {
+      notifyError('Material ID is missing. Please select a valid material.');
+      return;
+    }
+
+    // Check for duplicate materialId across all sections
+    const isDuplicate = sections.some(section =>
+      section.materials.some(material => material.id === materialData.materialId)
+    );
+
+    if (isDuplicate) {
+      notifyError('This material is already added. Please select a different material.');
+      return;
+    }
+
     setSections(sections.map(section => {
       if (section.id === sectionId) {
         return {
@@ -1217,7 +1249,7 @@ const renderLaborRateRow = () => (
           materials: [
             ...section.materials,
             {
-              id: section.materials.length + 1,
+              id: materialData.materialId,
               name: materialData.name,
               marketPrice: materialData.marketPrice || 0,
               unitPrice: materialData.unitPrice || 0,

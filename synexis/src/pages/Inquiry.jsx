@@ -13,6 +13,7 @@ import { FaEdit, FaEye } from "react-icons/fa";
 import { MdDelete } from "react-icons/md";
 import { LuHistory } from "react-icons/lu";
 import { Search, Plus, Menu } from 'lucide-react';
+import { AiOutlineDollar } from "react-icons/ai";
 import { DataGrid } from '@mui/x-data-grid';
 import { createTheme, ThemeProvider } from '@mui/material/styles';
 import { ToastContainer } from 'react-toastify';
@@ -165,8 +166,7 @@ const InquiryPage = () => {
   };
 
   const handleEditInquiry = (id) => {
-    navigate(`/estimation/editinquiry/${id}`);
-    notifyDefault(`Editing inquiry #${id}`);
+    navigate(`/estimation/inquiry/editinquiry/${id}`);
   };
 
   const handleDeleteInquiry = (id) => {
@@ -192,7 +192,7 @@ const InquiryPage = () => {
   };
 
   const handleCostEstimation = (id) => {
-    navigate(`/estimation/costEstimation/${id}`);
+    navigate(`/estimation/costEst/costEstimation/${id}`);
     notifyDefault(`Preparing cost estimation for inquiry #${id}`);
   };
 
@@ -207,7 +207,7 @@ const InquiryPage = () => {
       switch (status?.toUpperCase()) {
         case 'ACTIVE':
           return 'bg-green-500';
-        case 'REJECTED':
+        case 'INACTIVE':
           return 'bg-red-500';
       }
     };
@@ -239,7 +239,7 @@ const InquiryPage = () => {
           <MdDelete size={isMobile ? 16 : 18} />
         </div>
         <Link 
-          to={`/estimation/inquiryView/${params.id}`} 
+          to={`/estimation/inquiry/inquiryView/${params.id}`} 
           state={{ selectedInquiryId: params.id }}
         >
           <div 
@@ -252,10 +252,11 @@ const InquiryPage = () => {
         </Link>
         <button
           onClick={() => handleCostEstimation(params.id)}
-          className="ml-2 bg-[#3C50E0] hover:bg-blue-600 text-white text-xs px-2 py-1 rounded-lg text-center"
+          className="ml-2 bg-[#3C50E0] hover:bg-blue-700 text-white px-2 py-1 text-xs rounded flex items-center gap-1"
           title="Generate Cost Estimation"
         >
-          Cost Estimation
+          <AiOutlineDollar size={18} />
+          <span>Cost Estimation</span>
         </button>
       </div>
     );
@@ -286,7 +287,7 @@ const InquiryPage = () => {
       { 
         field: 'actions', 
         headerName: 'Actions', 
-        width: 220, 
+        width: 250, 
         renderCell: renderActionsCell,
         sortable: false,
         filterable: false,
@@ -387,7 +388,7 @@ const InquiryPage = () => {
                   />
                 </div>
               </div>
-              <Link to="/addInquiry">
+              <Link to="/estimation/inquiry/addInquiry">
                 <button 
                   className="bg-[#3C50E0] hover:bg-blue-700 text-white px-3 py-2 text-sm rounded-lg flex items-center justify-center sm:justify-start gap-2 focus:outline-none"
                 >

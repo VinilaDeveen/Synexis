@@ -31,6 +31,8 @@ const AddUnitPage = () => {
   });
   
   const [baseUnits, setBaseUnits] = useState([]);
+  const [baseUnitSearchTerm, setBaseUnitSearchTerm] = useState("");
+  const [showBaseUnitDropdown, setShowBaseUnitDropdown] = useState(false);
   const [loading, setLoading] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
@@ -51,7 +53,7 @@ const AddUnitPage = () => {
   useEffect(() => {
     const fetchBaseUnits = async () => {
       try {
-        const response = await unitService.getAllBaseUnits();
+        const response = await unitService.getBaseUnitDropDown(baseUnitSearchTerm);
         setBaseUnits(response.data);
       } catch (err) {
         if (isInitialLoad.current) {
@@ -61,8 +63,14 @@ const AddUnitPage = () => {
       }
     };
 
-    fetchBaseUnits();
-  }, []);
+    const debounceTimer = setTimeout(() => {
+    if (baseUnitSearchTerm.trim() !== "" || showBaseUnitDropdown) {
+      fetchBaseUnits();
+    }
+  }, 300);
+    return () => clearTimeout(debounceTimer)
+
+  }, [baseUnitSearchTerm, showBaseUnitDropdown]);
 
   // If in edit mode, fetch the unit details
   useEffect(() => {
@@ -81,6 +89,14 @@ const AddUnitPage = () => {
             baseUnitId: unitData.baseUnitId || null,
             conversionFactor: unitData.unitConversionFactor || 1
           });
+          
+          // Set the base unit search term if in edit mode and has base unit
+          if (unitData.baseUnitId) {
+            const baseUnit = baseUnits.find(u => u.baseUnitId === unitData.baseUnitId);
+            if (baseUnit) {
+              setBaseUnitSearchTerm(baseUnit.baseUnitName);
+            }
+          }
           
         } catch (err) {
           notifyError('Failed to load unit details. Please try again.')
@@ -108,14 +124,6 @@ const AddUnitPage = () => {
     setFormData(prev => ({
       ...prev,
       [id]: type === 'checkbox' ? checked : value
-    }));
-  };
-
-  const handleBaseUnitChange = (e) => {
-    const value = e.target.value;
-    setFormData(prev => ({
-      ...prev,
-      baseUnitId: value === '' ? null : Number(value)
     }));
   };
 
@@ -331,20 +339,47 @@ const AddUnitPage = () => {
                         required={formData.isMultiple}
                       />
                       <div className="flex gap-2 items-center">
-                        <select
-                          id="baseUnit"
-                          value={formData.baseUnitId || ''}
-                          onChange={handleBaseUnitChange}
-                          className="py-2 px-4 bg-blue-100 rounded focus:outline-none"
-                          required={formData.isMultiple}
-                        >
-                          <option value="">Select Base Unit</option>
-                          {baseUnits.map(unit => (
-                            <option key={unit.baseUnitId} value={unit.baseUnitId}>
-                              {unit.baseUnitName}
-                            </option>
-                          ))}
-                        </select>
+                        <div className="relative">
+                          <input
+                            type="text"
+                            id="baseUnit"
+                            autoComplete='off'
+                            value={baseUnitSearchTerm}
+                            onChange={(e) => {
+                              setBaseUnitSearchTerm(e.target.value);
+                              setShowBaseUnitDropdown(true);
+                            }}
+                            onFocus={() => setShowBaseUnitDropdown(true)}
+                            onBlur={() => setTimeout(() => setShowBaseUnitDropdown(false), 200)}
+                            className="py-2 bg-blue-100 w-[250px] rounded focus:outline-none px-3"
+                            placeholder="Search base unit..."
+                            required={formData.isMultiple}
+                          />
+                          {showBaseUnitDropdown && (
+                            <div className="absolute z-10 mt-1 w-full bg-white shadow-lg rounded-md border border-gray-200 max-h-60 overflow-auto">
+                              {baseUnits.length > 0 ? (
+                                baseUnits.map((unit) => (
+                                  <div
+                                    key={unit.baseUnitId}
+                                    className="px-4 py-2 text-left hover:bg-gray-100 cursor-pointer"
+                                    onClick={() => {
+                                      setFormData(prev => ({
+                                        ...prev,
+                                        baseUnitId: unit.baseUnitId
+                                      }));
+                                      setBaseUnitSearchTerm(unit.baseUnitName);
+                                      setShowBaseUnitDropdown(false);
+                                    }}
+                                  >
+                                    {unit.baseUnitName}
+                                  </div>
+                                ))
+                              ) : (
+                                <div className="px-4 py-2 text-gray-500">No base units found</div>
+                              )}
+                            </div>
+                          )}
+                        </div>
                       </div>
                     </div>
                   </div>

@@ -1,5 +1,6 @@
 import Navbar from '../components/Navbar';
 import Sidebar from '../components/Sidebar';
+import InactiveUnitWarning from '../components/WarningWidget';
 import { 
   FullPageLoader, 
   InlineLoader, 
@@ -25,6 +26,7 @@ const UnitView = () => {
   const [activeTab, setActiveTab] = useState('overview');
   const [loading, setLoading] = useState(false);
   const [unitLoading, setUnitLoading] = useState(false);
+  const [activateLoading, setActivateLoading] = useState(false);
   const isInitialLoad = useRef(true);
   const isInitialLoad1 = useRef(true);
   
@@ -154,7 +156,7 @@ const UnitView = () => {
 
   // Handle unit selection and update URL
   const handleUnitSelect = (unit) => {
-    navigate(`/inventory/unitView/${unit.unitId}`, { 
+    navigate(`/inventory/unit/unitView/${unit.unitId}`, { 
       state: { selectedUnitId: unit.unitId },
       replace: true 
     });
@@ -177,7 +179,7 @@ const UnitView = () => {
   };
 
   const handleEditUnit = () => {
-    navigate(`/inventory/editUnit/${selectedUnitId}`);
+    navigate(`/inventory/unit/editUnit/${selectedUnitId}`);
   };
 
   const handleDeleteUnit = async () => {
@@ -195,6 +197,42 @@ const UnitView = () => {
     } finally {
       setLoading(false);
     }
+  };
+
+  // Handle unit activation
+    const handleActivateUnit = async () => {
+      if (!selectedUnitId) return;
+  
+      try {
+        setActivateLoading(true);
+        await unitService.activate(selectedUnitId);
+        
+        // Update the selected category status locally
+        setSelectedUnit(prev => ({
+          ...prev,
+          unitStatus: 'ACTIVE'
+        }));
+        
+        // Also update in the categories list
+        setUnits(prev => 
+          prev.map(unit => 
+            unit.unitId === selectedUnitId 
+              ? { ...unit, unitStatus: 'ACTIVE' }
+              : unit
+          )
+        );
+        
+        notifySuccess(`Unit "${selectedUnit.unitName}" has been activated successfully`);
+      } catch (error) {
+        notifyError(`Error activating unit: ${error.message || 'Unknown error'}`);
+      } finally {
+        setActivateLoading(false);
+      }
+    };
+
+    // Check if category is inactive
+  const isUnitInactive = () => {
+    return selectedUnit && selectedUnit.unitStatus?.toUpperCase() === 'INACTIVE';
   };
 
   return (
@@ -308,6 +346,18 @@ const UnitView = () => {
                   </div>
                 </div>
 
+                {/* Inactive Category Warning Widget */}
+                {isUnitInactive() && (
+                  <InactiveUnitWarning 
+                    title = "Unit Inactive"
+                    entity={'Unit'}
+                    entityName={`${selectedUnit.unitName}`}
+                    onActivate={handleActivateUnit}
+                    loading={activateLoading}
+                    className="mb-4"
+                  />
+                )}
+
                 {/* Unit Content with Loading State */}
                 {unitLoading ? (
                   <ContentLoader/>
@@ -332,7 +382,7 @@ const UnitView = () => {
                     {/* Tab Content */}
                     <div className="p-4">
                       {activeTab === 'overview' ? (
-                        <div className="max-h-[calc(100vh-280px)] overflow-y-auto" style={{
+                        <div className={`overflow-y-auto ${selectedUnit.unitStatus === 'INACTIVE' ? "max-h-[calc(100vh-360px)]" : "max-h-[calc(100vh-250px)]"}`} style={{
                           scrollbarWidth: 'thin',
                           scrollbarColor: '#3B50DF #D9D9D9'
                         }}>
@@ -354,7 +404,11 @@ const UnitView = () => {
                               </div>
                               <div className="flex">
                                 <span className="w-32 text-gray-400">Status</span>
-                                <span>{selectedUnit.unitStatus.toLowerCase() || 'Inactive'}</span>
+                                <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                                  selectedUnit.unitStatus?.toUpperCase() === 'ACTIVE' 
+                                    ? 'bg-green-100 text-green-800' 
+                                    : 'bg-red-100 text-red-800'
+                                }`}>{selectedUnit.unitStatus.toLowerCase() || 'Inactive'}</span>
                               </div>
                               <div className="flex">
                                 <span className="w-32 text-gray-400">Allow Decimal</span>
@@ -379,7 +433,7 @@ const UnitView = () => {
                           )}
                         </div>
                       ) : (
-                        <div className="max-h-[calc(100vh-240px)] overflow-y-auto" style={{
+                        <div className={`overflow-y-auto ${selectedUnit.unitStatus === 'INACTIVE' ? "max-h-[calc(100vh-360px)]" : "max-h-[calc(100vh-250px)]"}`} style={{
                           scrollbarWidth: 'thin',
                           scrollbarColor: '#3B50DF #D9D9D9'
                         }}>

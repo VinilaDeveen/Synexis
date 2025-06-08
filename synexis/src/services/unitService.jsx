@@ -5,8 +5,8 @@ const API_BASE_URL = 'http://localhost:8080/api/synexis/unit';
 
 export const unitService = {
   getAll: () => axios.get(`${API_BASE_URL}`),
-  getAllBaseUnits : () => axios.get(`${API_BASE_URL}/baseUnitDropDown`),
-  getAllOtherUnits : (id) => axios.get(`${API_BASE_URL}/otherUnitDropDown/${id}`),
+  getBaseUnitDropDown : (searchTerm) => axios.get(`${API_BASE_URL}/baseUnitDropDown?searchUnit=${searchTerm}`),
+  getOtherUnitDropDown : (id, searchTerm) => axios.get(`${API_BASE_URL}/otherUnitDropDown/${id}?searchUnit=${searchTerm}`),
   getSideDrop: () => axios.get(`${API_BASE_URL}/sideDrop`),
   getById: (id) => axios.get(`${API_BASE_URL}/${id}`),
   create: (unit) => axios.post(`${API_BASE_URL}`, unit),

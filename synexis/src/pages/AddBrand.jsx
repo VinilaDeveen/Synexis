@@ -15,6 +15,9 @@ import { useState, useEffect, useRef } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import useTooltip from '../hooks/useTooltip';
 import { brandService } from '../services/brandService';
+import Select from 'react-select';
+import { getNames } from 'country-list';
+import 'country-flag-icons/3x2/flags.css'; 
 
 const AddBrandPage = () => {
   const { notifySuccess, notifyError, notifyWarning, notifyDefault } = useNotification();
@@ -32,11 +35,27 @@ const AddBrandPage = () => {
     imageUrl: null // Separate field to store the URL for display
   });
 
+
+  const [originalImageFile, setOriginalImageFile] = useState(null);
   const [imageChanged, setImageChanged] = useState(false);
   const [loading, setLoading] = useState(false);
   const [submitting, setSubmitting] = useState(false); // Add a specific state for submit button loading
   const [error, setError] = useState('');
   const isInitialLoad = useRef(true);
+
+  const convertImageUrlToFile = async (imageUrl, brandId, filename = 'brand-image.jpg') => {
+    try {
+      const response = await fetch(`http://localhost:8080/api/synexis/brand/image/${brandId}`);
+      const blob = await response.blob();
+      
+      // Create a File object from the blob
+      const file = new File([blob], filename, { type: blob.type || 'image/jpeg' });
+      return file;
+    } catch (error) {
+      console.error('Error converting image URL to File:', error);
+      return null;
+    }
+  };
 
   // Move the custom tooltip hooks inside the component
   const brandCountryTooltip = useTooltip(
@@ -63,16 +82,33 @@ const AddBrandPage = () => {
           const response = await brandService.getById(id);
           const brandData = response.data;
           
-          // Store the brandId for image display, but don't store the image as a string
+          // First set the basic form data
           setFormData({
             name: brandData.brandName,
             country: brandData.brandCountry,
             description: brandData.brandDescription,
             websiteUrl: brandData.brandWebsite,
-            image: null, // Don't store the image URL as a string
+            image: null,
             brandId: brandData.brandId,
-            imageUrl: brandData.brandImageUrl // Store URL separately for display purposes only
+            imageUrl: brandData.brandImageUrl
           });
+
+          // If there's an existing image, convert it to File object
+          if (brandData.brandImageUrl && brandData.brandId) {
+            const imageFile = await convertImageUrlToFile(
+              brandData.brandImageUrl, 
+              brandData.brandId,
+              `brand-${brandData.brandId}-image.jpg`
+            );
+            
+            if (imageFile) {
+              setOriginalImageFile(imageFile);
+              setFormData(prev => ({
+                ...prev,
+                image: imageFile // Set the converted File as the default image
+              }));
+            }
+          }
           
         } catch (err) {
           if (isInitialLoad.current) {
@@ -90,14 +126,37 @@ const AddBrandPage = () => {
   const [dragActive, setDragActive] = useState(false);
   const fileInputRef = useRef(null);
 
+  const countryOptions = getNames().map(name => {
+    // Map country names to ISO codes (you might need a more comprehensive mapping)
+    const countryCode = name.toLowerCase().replace(/\s+/g, '-');
+    return {
+      value: name,
+      label: name,
+      code: countryCode
+    };
+  });
+
+  const formatOptionLabel = ({ value, label, code }) => (
+    <div className="flex items-center">
+      <span className={`flag:${code} mr-2`} style={{ width: '20px', height: '15px' }} />
+      {label}
+    </div>
+  );
+
   const handleChange = (e) => {
     const { id, value } = e.target;
     setFormData(prev => ({
       ...prev,
       [id === 'brandName' ? 'name' : 
-       id === 'brandCountry' ? 'country' : 
        id === 'brandDescription' ? 'description' : 
        id === 'brandWebsiteUrl' ? 'websiteUrl' : id]: value
+    }));
+  };
+
+  const handleCountryChange = (selectedOption) => {
+    setFormData(prev => ({
+      ...prev,
+      country: selectedOption.value
     }));
   };
 
@@ -129,7 +188,6 @@ const AddBrandPage = () => {
     setDragActive(false);
     
     if (e.dataTransfer.files && e.dataTransfer.files[0]) {
-      // At least one file has been dropped
       setFormData(prevState => ({
         ...prevState,
         image: e.dataTransfer.files[0]
@@ -145,35 +203,36 @@ const AddBrandPage = () => {
   };
 
   const handleDeleteImage = () => {
-    setFormData(prev => ({...prev, image: null}));
+    setFormData(prev => ({
+      ...prev, 
+      image: null,
+      imageUrl: null
+    }));
     setImageChanged(true);
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setSubmitting(true); // Set submitting to true when the save/update button is clicked
+    setSubmitting(true);
     setError('');
     
-    // Create FormData object to handle file upload - same structure for both create and update
     const formDataToSend = new FormData();
     formDataToSend.append('brandName', formData.name);
     formDataToSend.append('brandCountry', formData.country);
     formDataToSend.append('brandDescription', formData.description || '');
     formDataToSend.append('brandWebsite', formData.websiteUrl || '');
 
-    // Add the image if one is selected - same handling for both create and update
+    // Always append the image if it exists (whether original or new)
     if (formData.image instanceof File) {
       formDataToSend.append('brandImage', formData.image);
     }
-  
+
     try {
       if (isEditMode) {
-        // For edit mode, use the ID from URL params
         await brandService.update(id, formDataToSend);
       } else {
         await brandService.create(formDataToSend);
       }
-      // Redirect to brands list page after successful operation
       navigate('/inventory/brand');
     } catch (err) {
       console.error('Error saving brand:', err);
@@ -181,7 +240,7 @@ const AddBrandPage = () => {
         ? notifyError('Failed to update brand. Please try again.')
         : notifyError('Failed to create brand. Please try again.') 
     } finally {
-      setSubmitting(false); // Reset submitting state if there's an error
+      setSubmitting(false);
     }
   };
   
@@ -228,7 +287,10 @@ const AddBrandPage = () => {
           )}
 
           {/* Add/Edit Brand Form */}
-          <div className="bg-white rounded-lg shadow-lg p-6">
+          <div className={`overflow-y-auto max-h-[calc(100vh-240px)] min-h-[calc(100vh-240px)] bg-white rounded-lg shadow-lg p-6`} style={{
+            scrollbarWidth: 'thin',
+            scrollbarColor: '#3B50DF #D9D9D9'
+          }}>
             <div className="max-w-4xl mx-auto p-6">
               <form className="space-y-6">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -259,7 +321,6 @@ const AddBrandPage = () => {
                           </label>
                         </div>
                         <div className='ml-2'>
-                          {/* Using the custom tooltip hook */}
                           <brandCountryTooltip.Tooltip {...brandCountryTooltip.tooltipProps}>
                             <div className="text-slate-700 cursor-help">
                               <IoMdInformationCircle size={18} />
@@ -268,14 +329,58 @@ const AddBrandPage = () => {
                         </div>
                       </div>
                       
-                      <input
-                        type="text"
+                      <Select
                         id="country"
                         name="country"
                         required
-                        value={formData.country}
-                        onChange={handleChange}
-                        className="mt-1 block w-full bg-blue-50 border border-transparent rounded-md shadow-sm px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                        options={countryOptions}
+                        value={countryOptions.find(option => option.value === formData.country)}
+                        onChange={handleCountryChange}
+                        className="mt-1"
+                        classNamePrefix="select"
+                        placeholder="Select a country..."
+                        formatOptionLabel={formatOptionLabel}
+                        styles={{
+                          control: (provided) => ({
+                            ...provided,
+                            backgroundColor: '#EFF6FF',
+                            border: '1px solid transparent',
+                            borderRadius: '0.375rem',
+                            boxShadow: '0 1px 2px 0 rgba(0, 0, 0, 0.05)',
+                            minHeight: '42px',
+                            '&:hover': {
+                              borderColor: 'transparent'
+                            }
+                          }),
+                          option: (provided, state) => ({
+                            ...provided,
+                            backgroundColor: state.isSelected ? '#3B50DF' : 'white',
+                            color: state.isSelected ? 'white' : 'black',
+                            padding: '8px 12px', // Increased padding
+                            height: '40px', // Increased height
+                            display: 'flex',
+                            alignItems: 'center',
+                            fontSize: '14px',
+                            '&:hover': {
+                              backgroundColor: state.isSelected ? '#3B50DF' : '#f3f4f6'
+                            }
+                          }),
+                          menu: (provided) => ({
+                            ...provided,
+                            zIndex: 9999, // Ensure dropdown appears above other elements
+                            borderRadius: '8px', // Rounded corners for dropdown
+                            boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)'
+                          }),
+                          menuList: (provided) => ({
+                            ...provided,
+                            padding: 0 // Remove default padding
+                          }),
+                          singleValue: (provided) => ({
+                            ...provided,
+                            display: 'flex',
+                            alignItems: 'center'
+                          })
+                        }}
                       />
                     </div>
 
@@ -329,13 +434,13 @@ const AddBrandPage = () => {
                                 alt="Preview" 
                                 className="max-h-full max-w-full object-contain"
                               />
-                            ) : (
+                            ) : formData.imageUrl && formData.brandId && !imageChanged ? (
                               <img 
                                 src={`http://localhost:8080/api/synexis/brand/image/${formData.brandId}`} 
                                 alt="Preview" 
                                 className="max-h-full max-w-full object-contain"
                               />
-                            )}
+                            ) : null}
                           </div>
                           
                           <div className="flex justify-between items-center">

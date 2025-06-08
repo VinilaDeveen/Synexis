@@ -167,15 +167,15 @@ const UnitPage = () => {
   const handleAddUnit = () => {
     notifySuccess('Add unit dialog opened');
     // Navigate to add unit page
-    navigate('/inventory/addunit');
+    navigate('/inventory/unit/addunit');
   };
 
   const handleEditUnit = (id) => {
-    navigate(`/inventory/editunit/${id}`);
+    navigate(`/inventory/unit/editunit/${id}`);
   };
 
   const handleViewUnit = (id) => {
-    navigate(`/inventory/unitView/${id}`, { state: { selectedUnitId: id } });
+    navigate(`/inventory/unit/unitView/${id}`, { state: { selectedUnitId: id } });
   };
 
   const handleDeleteUnit = async (id) => {
@@ -185,15 +185,9 @@ const UnitPage = () => {
       const unitName = unitToDelete ? unitToDelete.unitName : 'Unknown';
       
       // Call API service for deletion
-      const response = await unitService.delete(id);
+      await unitService.delete(id);
       
-      if (response && response.success) {
-        notifySuccess(`Unit "${unitName}" successfully deleted`);
-        // Update local state to reflect the deletion
-        setUnits(units.filter(unit => unit.unitId !== id));
-      } else {
-        notifyError('Failed to delete unit');
-      }
+      notifySuccess(`Unit "${unitName}" successfully deleted`);
     } catch (error) {
       notifyError(`Error deleting unit: ${error.message || 'Unknown error'}`);
     }

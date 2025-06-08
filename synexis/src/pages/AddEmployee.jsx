@@ -51,6 +51,7 @@ const AddEmployeePage = () => {
     status: 'ACTIVE'
   });
 
+  const [originalImageFile, setOriginalImageFile] = useState(null);
   const [roles, setRoles] = useState([]);
   const [activeTab, setActiveTab] = useState('personalDetails');
   const [imageChanged, setImageChanged] = useState(false);
@@ -59,6 +60,20 @@ const AddEmployeePage = () => {
   const [error, setError] = useState('');
   const isInitialLoad = useRef(true);
   const isInitialLoad1 = useRef(true);
+
+  const convertImageUrlToFile = async (imageUrl, employeeId, filename = 'brand-image.jpg') => {
+    try {
+      const response = await fetch(`http://localhost:8080/api/synexis/employee/image/${employeeId}`);
+      const blob = await response.blob();
+      
+      // Create a File object from the blob
+      const file = new File([blob], filename, { type: blob.type || 'image/jpeg' });
+      return file;
+    } catch (error) {
+      console.error('Error converting image URL to File:', error);
+      return null;
+    }
+  };
 
   // Custom tooltip hooks for info icons
   const nicTooltip = useTooltip(
@@ -112,6 +127,22 @@ const AddEmployeePage = () => {
             salary: employeeData.salary || 0,
             status: employeeData.status || 'ACTIVE'
           });
+
+          if (employeeData.employeeImageUrl && employeeData.employeeId) {
+            const imageFile = await convertImageUrlToFile(
+              employeeData.employeeImageUrl,
+              employeeData.employeeId,
+              `employee-${employeeData.employeeId}-image.jpg`
+            );
+
+            if (imageFile) {
+              setOriginalImageFile(imageFile);
+              setFormData(prev => ({
+                ...prev,
+                image: imageFile // Set the converted File as the default image
+              }));
+            }
+          }
           
         } catch (err) {
           if (isInitialLoad.current) {
@@ -284,7 +315,7 @@ const AddEmployeePage = () => {
           )}
 
           {/* Add/Edit Employee Form */}
-          <div className="bg-white rounded-lg shadow-lg p-6">
+          <div className="bg-white rounded-lg shadow-lg">
             {/* Tabs */}
             <div className="flex">
               <button 
@@ -306,17 +337,16 @@ const AddEmployeePage = () => {
                 Employment Details
               </button>
             </div>
-            <hr className='mt-2 mb-5'/>
             
             {/* Tab Content - Personal Details */}
             {activeTab === 'personalDetails' && (
-              <div className="max-h-[calc(100vh-360px)] overflow-y-auto" style={{
+              <div className="max-h-[calc(100vh-360px)] overflow-y-auto p-6" style={{
                 scrollbarWidth: 'thin',
                 scrollbarColor: ' #3B50DF #D9D9D9'
               }}>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   {/* Left Column */}
-                  <div className="space-y-6">
+                  <div className="space-y-8">
                     <div className="flex space-x-10 mb-4">
                       {/* Prefix Field */}
                       <div>
@@ -462,21 +492,21 @@ const AddEmployeePage = () => {
                     
                     {/* Display image preview or placeholder */}
                     {formData.image instanceof File || formData.imageUrl ? (
-                      <div className="bg-blue-50 rounded-md p-3 flex flex-col items-center">
-                        <div className="bg-black flex items-center justify-center mb-3">
+                      <div className="bg-blue-50 w-80 rounded-md p-3 flex flex-col items-center">
+                        <div className="h-24 w-35 bg-blue-50 flex items-center justify-center mb-3">
                           {formData.image instanceof File ? (
                             <img 
                               src={URL.createObjectURL(formData.image)} 
                               alt="Preview" 
                               className="max-h-full max-w-full object-contain"
                             />
-                          ) : (
+                          ) : formData.imageUrl && formData.employeeId && !imageChanged ? (
                             <img 
                               src={`http://localhost:8080/api/synexis/employee/image/${formData.employeeId}`} 
                               alt="Preview" 
                               className="max-h-full max-w-full object-contain"
                             />
-                          )}
+                          ) : null}
                         </div>
                         
                         <div className="flex justify-between items-center w-full">
@@ -529,7 +559,7 @@ const AddEmployeePage = () => {
             
             {/* Tab Content - Contact & Residential Information */}
             {activeTab === 'contactInfo' && (
-              <div className="max-h-[calc(100vh-340px)] overflow-y-auto" style={{
+              <div className="max-h-[calc(100vh-340px)] overflow-y-auto p-6" style={{
                 scrollbarWidth: 'thin',
                 scrollbarColor: ' #3B50DF #D9D9D9'
               }}>
@@ -652,7 +682,7 @@ const AddEmployeePage = () => {
             
             {/* Tab Content - Employment Details */}
             {activeTab === 'employmentDetails' && (
-              <div className="max-h-[calc(100vh-340px)] overflow-y-auto" style={{
+              <div className="max-h-[calc(100vh-340px)] overflow-y-auto p-6" style={{
                 scrollbarWidth: 'thin',
                 scrollbarColor: ' #3B50DF #D9D9D9'
               }}>

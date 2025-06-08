@@ -1,5 +1,6 @@
 import Navbar from '../components/Navbar';
 import Sidebar from '../components/Sidebar';
+import InactiveInquiryWarning from '../components/WarningWidget';
 import { 
   FullPageLoader, 
   InlineLoader, 
@@ -26,6 +27,7 @@ const InquiryViewPage = () => {
   const [activeTab, setActiveTab] = useState('overview');
 
   const [loading, setLoading] = useState(false);
+  const [activateLoading, setActivateLoading] = useState(false);
   const [inquiryLoading, setInquiryLoading] = useState(false);
   const isInitialLoad = useRef(true);
   const isInitialLoad1 = useRef(true);
@@ -154,7 +156,7 @@ const InquiryViewPage = () => {
 
   // Handle inquiry selection and update URL
   const handleInquirySelect = (inquiry) => {
-    navigate(`/estimation/inquiryView/${inquiry.inquiryId}`, { 
+    navigate(`/estimation/inquiry/inquiryView/${inquiry.inquiryId}`, { 
       state: { selectedInquiryId: inquiry.inquiryId },
       replace: true 
     });
@@ -181,7 +183,7 @@ const InquiryViewPage = () => {
   };
 
   const handleEditInquiry = () => {
-    navigate(`/estimation/editinquiry/${selectedInquiryId}`);
+    navigate(`/estimation/inquiry/editinquiry/${selectedInquiryId}`);
   };
 
   const handleDeleteInquiry = async () => {
@@ -193,7 +195,7 @@ const InquiryViewPage = () => {
       notifySuccess(`Inquiry "${selectedInquiry.projectName}" successfully deleted`);
       
       // After deletion, navigate back to inquiries list
-      navigate('/inquiry');
+      navigate('/estimation/inquiry');
     } catch (error) {
       notifyError(`Error deleting inquiry: ${error.message || 'Unknown error'}`);
     } finally {
@@ -213,6 +215,42 @@ const InquiryViewPage = () => {
       default:
         return 'bg-gray-100 text-gray-800';
     }
+  };
+
+  // Handle inquiry activation
+    const handleActivateInquiry = async () => {
+      if (!selectedInquiryId) return;
+  
+      try {
+        setActivateLoading(true);
+        await inquiryService.activate(selectedInquiryId);
+        
+        // Update the selected category status locally
+        setSelectedInquiry(prev => ({
+          ...prev,
+          InquiryStatus: 'ACTIVE'
+        }));
+        
+        // Also update in the categories list
+        setInquiries(prev => 
+          prev.map(inq => 
+            inq.inquiryId === selectedInquiryId 
+              ? { ...inq, inquiryStatus: 'ACTIVE' }
+              : inq
+          )
+        );
+        
+        notifySuccess(`Inquiry "${selectedInquiry.projectName}" has been activated successfully`);
+      } catch (error) {
+        notifyError(`Error activating inquiry: ${error.message || 'Unknown error'}`);
+      } finally {
+        setActivateLoading(false);
+      }
+    };
+
+    // Check if category is inactive
+  const isInquiryInactive = () => {
+    return selectedInquiry && selectedInquiry.inquiryStatus?.toUpperCase() === 'INACTIVE';
   };
 
   return (
@@ -328,6 +366,18 @@ const InquiryViewPage = () => {
                     </div>
                   </div>
                 </div>
+
+                {/* Inactive Category Warning Widget */}
+                {isInquiryInactive() && (
+                  <InactiveInquiryWarning 
+                    title = "Inquiry Inactive"
+                    entity={'Inquiry'}
+                    entityName={`${selectedInquiry.projectName}`}
+                    onActivate={handleActivateInquiry}
+                    loading={activateLoading}
+                    className="mb-4"
+                  />
+                )}
 
                 {/* Inquiry Content with Loading State */}
                 {inquiryLoading ? (

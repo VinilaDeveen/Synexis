@@ -108,7 +108,7 @@ export default function Sidebar() {
                 <AccordionBody className="py-1">
                   <List className="p-0 text-white">
                     <Link to="/inventory/material">
-                      <ListItem className={`${isActive('/inventory/material') ? 'bg-[#3C50E0]' : 'hover:bg-[#3C50E0]'} text-white`}>
+                      <ListItem className={`${isInPath('/inventory/material') ? 'bg-[#3C50E0]' : 'hover:bg-[#3C50E0]'} text-white`}>
                         <ListItemPrefix>
                           <ChevronRightIcon strokeWidth={3} className="h-3 w-5" />
                         </ListItemPrefix>
@@ -116,7 +116,7 @@ export default function Sidebar() {
                       </ListItem>
                     </Link>
                     <Link to="/inventory/category">
-                      <ListItem className={`${isActive('/inventory/category') ? 'bg-[#3C50E0]' : 'hover:bg-[#3C50E0]'} text-white`}>
+                      <ListItem className={`${isInPath('/inventory/category') ? 'bg-[#3C50E0]' : 'hover:bg-[#3C50E0]'} text-white`}>
                         <ListItemPrefix>
                           <ChevronRightIcon strokeWidth={3} className="h-3 w-5" />
                         </ListItemPrefix>
@@ -124,7 +124,7 @@ export default function Sidebar() {
                       </ListItem>
                     </Link>
                     <Link to="/inventory/brand">
-                      <ListItem className={`${isActive('/inventory/brand') ? 'bg-[#3C50E0]' : 'hover:bg-[#3C50E0]'} text-white`}>
+                      <ListItem className={`${isInPath('/inventory/brand') ? 'bg-[#3C50E0]' : 'hover:bg-[#3C50E0]'} text-white`}>
                         <ListItemPrefix>
                           <ChevronRightIcon strokeWidth={3} className="h-3 w-5" />
                         </ListItemPrefix>
@@ -132,7 +132,7 @@ export default function Sidebar() {
                       </ListItem>
                     </Link>
                     <Link to="/inventory/unit">
-                      <ListItem className={`${isActive('/inventory/unit') ? 'bg-[#3C50E0]' : 'hover:bg-[#3C50E0]'} text-white`}>
+                      <ListItem className={`${isInPath('/inventory/unit') ? 'bg-[#3C50E0]' : 'hover:bg-[#3C50E0]'} text-white`}>
                         <ListItemPrefix>
                           <ChevronRightIcon strokeWidth={3} className="h-3 w-5" />
                         </ListItemPrefix>
@@ -188,7 +188,7 @@ export default function Sidebar() {
                 <AccordionBody className="py-1 text-white">
                   <List className="p-0">
                     <Link to="/people/employee">
-                      <ListItem className={`${isActive('/people/employee') ? 'bg-[#3C50E0]' : 'hover:bg-[#3C50E0]'} text-white`}>
+                      <ListItem className={`${isInPath('/people/employee') ? 'bg-[#3C50E0]' : 'hover:bg-[#3C50E0]'} text-white`}>
                         <ListItemPrefix>
                           <ChevronRightIcon strokeWidth={3} className="h-3 w-5" />
                         </ListItemPrefix>
@@ -196,7 +196,7 @@ export default function Sidebar() {
                       </ListItem>
                     </Link>
                     <Link to="/people/customer">
-                      <ListItem className={`${isActive('/people/customer') ? 'bg-[#3C50E0]' : 'hover:bg-[#3C50E0]'} text-white`}>
+                      <ListItem className={`${isInPath('/people/customer') ? 'bg-[#3C50E0]' : 'hover:bg-[#3C50E0]'} text-white`}>
                         <ListItemPrefix>
                           <ChevronRightIcon strokeWidth={3} className="h-3 w-5" />
                         </ListItemPrefix>
@@ -244,7 +244,7 @@ export default function Sidebar() {
                 <AccordionBody className="py-1 text-white">
                   <List className="p-0">
                     <Link to="/estimation/inquiry">
-                      <ListItem className={`${isActive('/estimation/inquiry') ? 'bg-[#3C50E0]' : 'hover:bg-[#3C50E0]'} text-white`}>
+                      <ListItem className={`${isInPath('/estimation/inquiry') ? 'bg-[#3C50E0]' : 'hover:bg-[#3C50E0]'} text-white`}>
                         <ListItemPrefix>
                           <ChevronRightIcon strokeWidth={3} className="h-3 w-5" />
                         </ListItemPrefix>
@@ -252,7 +252,7 @@ export default function Sidebar() {
                       </ListItem>
                     </Link>
                     <Link to="/estimation/costEstimations">
-                      <ListItem className={`${isActive('/estimation/cost-estimations') ? 'bg-[#3C50E0]' : 'hover:bg-[#3C50E0]'} text-white`}>
+                      <ListItem className={`${isInPath('/estimation/costEst') ? 'bg-[#3C50E0]' : 'hover:bg-[#3C50E0]'} text-white`}>
                         <ListItemPrefix>
                           <ChevronRightIcon strokeWidth={3} className="h-3 w-5" />
                         </ListItemPrefix>
@@ -300,23 +300,23 @@ export default function Sidebar() {
                 <AccordionBody className="py-1 text-white">
                   <List className="p-0">
                     <Link to="/project/job">
-                      <ListItem className={`${isActive('/project/job') ? 'bg-[#3C50E0]' : 'hover:bg-[#3C50E0]'} text-white`}>
+                      <ListItem className={`${isInPath('/project/job') ? 'bg-[#3C50E0]' : 'hover:bg-[#3C50E0]'} text-white`}>
                         <ListItemPrefix>
                           <ChevronRightIcon strokeWidth={3} className="h-3 w-5" />
                         </ListItemPrefix>
                         Jobs
                       </ListItem>
                     </Link>
-                    <Link to="/project/jobApproval">
-                      <ListItem className={`${isActive('/project/job-approvals') ? 'bg-[#3C50E0]' : 'hover:bg-[#3C50E0]'} text-white`}>
+                    <Link to="/project/approvalJob">
+                      <ListItem className={`${isInPath('/project/approvalJob') ? 'bg-[#3C50E0]' : 'hover:bg-[#3C50E0]'} text-white`}>
                         <ListItemPrefix>
                           <ChevronRightIcon strokeWidth={3} className="h-3 w-5" />
                         </ListItemPrefix>
                         Job Approvals
                       </ListItem>
                     </Link>
-                    <Link to="/project/bill-of-quantities">
-                      <ListItem className={`${isActive('/project/bill-of-quantities') ? 'bg-[#3C50E0]' : 'hover:bg-[#3C50E0]'} text-white`}>
+                    <Link to="/project/boq">
+                      <ListItem className={`${isActive('/project/boq') ? 'bg-[#3C50E0]' : 'hover:bg-[#3C50E0]'} text-white`}>
                         <ListItemPrefix>
                           <ChevronRightIcon strokeWidth={3} className="h-3 w-5" />
                         </ListItemPrefix>

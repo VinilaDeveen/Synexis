@@ -21,7 +21,6 @@ const CostEstimationViewPage = () => {
   const { notifySuccess, notifyError, notifyWarning, notifyDefault } = useNotification();
   const { inquiryId } = useParams(); 
   const { id } = useParams(); // Get the estimation ID from URL if editing
-  const isEditMode = !!id;
   const navigate = useNavigate();
 
   // Add loading state for edit mode
@@ -293,37 +292,42 @@ const CostEstimationViewPage = () => {
 
           // Initialize sections with materials from backend
           const frontendSections = sections.map(section => {
-            const sectionMaterials = [];
+            const materialMap = {};
             
             // Find all materials that belong to this section
             backendItems.forEach(item => {
+              const itemIndex = frontendItems.findIndex(i => i.id === item.itemId.toString());
+              if (itemIndex === -1) return;
+
               item.itemMaterials.forEach(material => {
                 if (material.sectionId === sectionMap[section.name]) {
-                  // Create quantities array that matches items order
-                  const quantities = new Array(frontendItems.length).fill(0);
-                  const itemIndex = frontendItems.findIndex(i => i.id === item.itemId.toString());
-                
-                  if (itemIndex !== -1) {
-                    quantities[itemIndex] = material.materialQuantity || 0;
+                  const materialId = material.materialId;
+
+                  if (!materialMap[materialId]) {
+                    const quantities = new Array(frontendItems.length).fill(0);
+                    materialMap[materialId] = {
+                      id: materialId,
+                      name: material.materialName,
+                      marketPrice: material.materialMarketPrice || 0,
+                      unitPrice: material.unitPrice || 0,
+                      discount: material.discount || 0,
+                      discountedPrice: (material.unitPrice || 0) * (1 - (material.discount || 0) / 100),
+                      material: material.material || '-',
+                      materialDescription: material.materialDescription || '-',
+                      materialPartNumber: material.materialPartNumber || '-',
+                      materialMake: material.materialMake || '-',
+                      countryOfOrigin: material.materialCountry || '-',
+                      quantities
+                    };
                   }
-                  
-                  sectionMaterials.push({
-                    id: material.materialId,
-                    name: material.materialName,
-                    marketPrice: material.materialMarketPrice || 0,
-                    unitPrice: material.unitPrice || 0,
-                    discount: material.discount || 0,
-                    discountedPrice: (material.unitPrice || 0) * (1 - (material.discount || 0) / 100),
-                    material: material.material || '-',
-                    materialDescription: material.materialDescription || '-',
-                    materialPartNumber: material.materialPartNumber || '-',
-                    materialMake: material.materialMake || '-',
-                    countryOfOrigin: material.materialCountry || '-',
-                    quantities: quantities
-                  });
+                  // Set the quantity for the current item
+                  materialMap[materialId].quantities[itemIndex] = material.materialQuantity || 0;
                 }
               });
             });
+
+            // Convert materialMap to an array
+            const sectionMaterials = Object.values(materialMap);
             
             return {
               ...section,
@@ -438,7 +442,7 @@ const [markupsInitialized, setMarkupsInitialized] = useState(false);
   });  
 
   const handleCancel = () => {
-    navigate(`/estimation/costEstimation/${inquiryId}`);
+    navigate(`/estimation/costEst/costEstimation/${inquiryId}`);
   };
 
 // Find the normal labor hour price in useEffect
@@ -544,9 +548,20 @@ const [markupsInitialized, setMarkupsInitialized] = useState(false);
   });
 
   // Calculate costs for each section and item
+  const markupFieldName = {
+    'Switch Gear Component': 'switchGearComponentMarkup',
+    'Control Accessories': 'controlAccessoryMarkup',
+    'Bus Bar': 'busBarMarkup',
+    'Wiring': 'wiringMarkup',
+    'Other Accessories': 'otherAccessoryMarkup',
+    'Electrical Labor': 'electricalLabourMarkup',
+    'Transport': 'transportMarkup',
+    'Enclosure': 'enclosureMarkup'
+  };
+
   sections.forEach(section => {
     const isElectrical = section.name !== 'Enclosure';
-    const sectionMarkupField = `${section.name.replace(/\s+/g, '').toLowerCase()}Markup`;
+    const sectionMarkupField = markupFieldName[section.name];
     
     section.materials.forEach(material => {
       material.quantities.forEach((quantity, itemIndex) => {
@@ -902,7 +917,7 @@ const renderLaborRateRow = () => (
   // Render function for Markup percentage input rows
   const renderMarkupRow = (sectionName) => {
   const markupFieldName = {
-    'Switch Gear Components': 'switchGearComponentMarkup',
+    'Switch Gear Component': 'switchGearComponentMarkup',
     'Control Accessories': 'controlAccessoryMarkup',
     'Bus Bar': 'busBarMarkup',
     'Wiring': 'wiringMarkup',

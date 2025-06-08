@@ -11,6 +11,7 @@ import { useState, useEffect, useRef } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { MdDelete } from "react-icons/md";
 import { FaEdit, FaEye } from "react-icons/fa";
+import { RiBillLine } from "react-icons/ri";
 import { LuHistory } from "react-icons/lu";
 import { Search, Plus, Menu } from 'lucide-react';
 import { DataGrid } from '@mui/x-data-grid';
@@ -165,15 +166,9 @@ const JobPage = () => {
   const handleSearchChange = (e) => {
     setSearchTerm(e.target.value);
   };
-  
-  const handleCreateJob = () => {
-    console.log("Create job clicked");
-    navigate('/addJob');
-    notifySuccess('Create job form opened');
-  };
 
   const handleEditJob = (id) => {
-    navigate(`/editJob/${id}`);
+    navigate(`/project/job/editjobRegistration/${id}`);
     console.log(`Edit job ${id} clicked`);
     notifyDefault(`Editing job #${id}`);
   };
@@ -197,8 +192,8 @@ const JobPage = () => {
     }
   };
   
-  const handleViewJob = () => {
-    navigate('/jobDash');
+  const handleViewJob = (id) => {
+    navigate(`/project/job/jobView/${id}`);
     notifyDefault(`Viewing `);
   };
   
@@ -251,7 +246,7 @@ const JobPage = () => {
     }
     
     return (
-      <div className={`inline-block ml-3 px-2 py-1 rounded-full ${statusColor} ${bgColor} text-xs font-medium`}>
+      <div className={`inline-block px-2 py-1 rounded-full ${statusColor} ${bgColor} text-xs font-medium`}>
         {status}
       </div>
     );
@@ -277,11 +272,26 @@ const JobPage = () => {
         </div>
         <div 
           className="text-[#3B50DF] hover:text-green-500 cursor-pointer"
-          onClick={() => handleViewJob()}
+          onClick={() => handleViewJob(params.id)}
           title="View Job Details"
         >
           <FaEye size={isMobile ? 16 : 18} />
         </div>
+
+        {params.row.status === 'APPROVED_BY_ACCOUNTANT' && (
+          <Link 
+            to={`/project/boq/${params.row.quotationNumber}/${params.id}`} 
+            state={{ selectedJobId: params.id }}
+          >
+            <button 
+              className="bg-[#3C50E0] hover:bg-blue-700 text-white px-5 py-1 text-xs rounded flex items-center gap-1"
+              title="Bill of Quantity"
+            >
+              <RiBillLine size={14} />
+              <span className='ml-2'>BOQ</span>
+            </button>
+        </Link>
+        )}
       </div>
     );
   };
@@ -301,7 +311,7 @@ const JobPage = () => {
       { 
         field: 'actions', 
         headerName: 'Actions', 
-        width: 120, 
+        width: 250, 
         renderCell: renderActionsCell,
         sortable: false,
         filterable: false,
@@ -331,9 +341,9 @@ const JobPage = () => {
       {
         field: 'status',
         headerName: 'Job Status',
-        width: 120,
+        width: 250,
         renderCell: renderStatusCell,
-        headerAlign: 'center',
+        headerAlign: 'left',
         align: 'left'
       },
       { 
@@ -427,13 +437,6 @@ const JobPage = () => {
                   />
                 </div>
               </div>
-              <button 
-                onClick={handleCreateJob}
-                className="bg-[#3C50E0] hover:bg-blue-700 text-white px-3 py-2 text-sm rounded-lg flex items-center justify-center sm:justify-start gap-2 focus:outline-none"
-              >
-                <Plus size={16} />
-                <span>Create Job</span>
-              </button>
             </div>
             <hr />
 

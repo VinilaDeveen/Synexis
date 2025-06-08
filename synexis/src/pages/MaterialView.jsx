@@ -1,5 +1,6 @@
 import Navbar from '../components/Navbar';
 import Sidebar from '../components/Sidebar';
+import InactiveMaterialWarning from '../components/WarningWidget';
 import { 
   FullPageLoader, 
   InlineLoader, 
@@ -26,6 +27,7 @@ function MaterialView() {
   const [selectedMaterial, setSelectedMaterial] = useState(null);
   const [activeTab, setActiveTab] = useState('overview');
   const [loading, setLoading] = useState(false);
+  const [activateLoading, setActivateLoading] = useState(false);
   const [materialLoading, setMaterialLoading] = useState(false);
   const [paginationModel, setPaginationModel] = useState({
     pageSize: 5,
@@ -192,7 +194,7 @@ function MaterialView() {
 
   // Handle material selection and update URL
   const handleMaterialSelect = (material) => {
-    navigate(`/inventory/materialView/${material.materialId}`, { 
+    navigate(`/inventory/material/materialView/${material.materialId}`, { 
       state: { selectedMaterialId: material.materialId },
       replace: true 
     });
@@ -215,7 +217,7 @@ function MaterialView() {
   };
 
   const handleEditMaterial = () => {
-    navigate(`/inventory/editMaterial/${selectedMaterialId}`);
+    navigate(`/inventory/material/editMaterial/${selectedMaterialId}`);
   };
 
   const handleDeleteMaterial = async () => {
@@ -233,6 +235,40 @@ function MaterialView() {
     } finally {
       setLoading(false);
     }
+  };
+
+  //Handle material activation
+  const handleActivateMaterial = async () => {
+    if (!selectedMaterialId) return;
+
+    try {
+      setActivateLoading(true);
+      await materialService.activate(selectedMaterialId);
+
+      setSelectedMaterial(prev => ({
+        ...prev,
+        materialStatus: 'ACTIVE'
+      }));
+
+      setMaterials(prev => 
+        prev.map(mat =>
+          mat.materialId === selectedMaterialId
+           ? {...mat, materialStatus: 'ACTIVE'}
+           : mat
+        )
+      );
+
+      notifySuccess(`Material "${selectedMaterial.materialName}" has been activated successfully`);
+    } catch (error) {
+      notifyError(`Error activating category: ${error.message || 'Unknown error'}`);
+    } finally {
+      setActivateLoading(false);
+    }
+  }
+
+  // Check if category is inactive
+  const isMaterialInactive = () => {
+    return selectedMaterial && selectedMaterial.materialStatus?.toUpperCase() === 'INACTIVE';
   };
 
   return (
@@ -353,6 +389,18 @@ function MaterialView() {
                   </div>
                 </div>
 
+                {/* Inactive Category Warning Widget */}
+                {isMaterialInactive() && (
+                  <InactiveMaterialWarning 
+                    title = "Material Inactive"
+                    entity={'Material'}
+                    entityName={`${selectedMaterial.materialName}`}
+                    onActivate={handleActivateMaterial}
+                    loading={activateLoading}
+                    className="mb-4"
+                  />
+                )}
+
                 {/* Material Content with Loading State */}
                 {materialLoading ? (
                   <div className="flex items-center justify-center h-40">
@@ -384,7 +432,7 @@ function MaterialView() {
                     {/* Tab Content */}
                     <div className="p-6">
                       {activeTab === 'overview' ? (
-                        <div className="max-h-[calc(100vh-280px)] overflow-y-auto" style={{
+                        <div className={`overflow-y-auto ${selectedMaterial.materialStatus === 'INACTIVE' ? "max-h-[calc(100vh-340px)]" : "max-h-[calc(100vh-250px)]"}`} style={{
                           scrollbarWidth: 'thin',
                           scrollbarColor: ' #3B50DF #D9D9D9'
                         }}>
@@ -505,7 +553,11 @@ function MaterialView() {
                                   <div className="flex">
                                     <div className="flex">
                                       <span className="w-32 text-gray-400">Status</span>
-                                      <span className="w-64">{selectedMaterial.materialStatus.toLowerCase()}</span>
+                                      <span className={`mr-[210px] px-2 py-1 rounded-full text-xs font-medium ${
+                                        selectedMaterial.materialStatus?.toUpperCase() === 'ACTIVE' 
+                                          ? 'bg-green-100 text-green-800' 
+                                          : 'bg-red-100 text-red-800'
+                                      }`}>{selectedMaterial.materialStatus.toLowerCase()}</span>
                                     </div>
                                     <div className="flex">
                                       <span className="w-32 text-gray-400">Material Use</span>
@@ -603,7 +655,7 @@ function MaterialView() {
                           </div>
                         </div>
                       ) : (
-                        <div className="max-h-[calc(100vh-270px)] overflow-y-auto" style={{
+                        <div className={`overflow-y-auto ${selectedMaterial.materialStatus === 'INACTIVE' ? "max-h-[calc(100vh-340px)]" : "max-h-[calc(100vh-270px)]"}`}style={{
                           scrollbarWidth: 'thin',
                           scrollbarColor: '#3B50DF #D9D9D9'
                         }}>
